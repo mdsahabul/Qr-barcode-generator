@@ -3,689 +3,2624 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR & Barcode Generator</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<title>CodeCraft — QR & Barcode Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0B0D17;
-  --surface:#111320;
-  --card:#181B2E;
-  --border:#232640;
-  --border-hover:#353A5E;
-  --accent:#6366F1;
-  --accent-dim:#4F51C4;
-  --accent-glow:rgba(99,102,241,0.15);
-  --accent-bg:rgba(99,102,241,0.08);
-  --text:#EEEEF5;
-  --text-2:#9496B2;
-  --text-3:#5A5D7A;
-  --green:#10D98C;
-  --green-bg:rgba(16,217,140,0.08);
-  --red:#FF5E6D;
-  --radius:10px;
-  --radius-lg:16px;
+  --bg:#06071A;
+  --surface:#0B0D22;
+  --card:#101328;
+  --card2:#14172E;
+  --border:#1B1E3D;
+  --border-h:#292E5C;
+  --accent:#8B5CF6;
+  --accent-d:#7C3AED;
+  --accent-glow:rgba(139,92,246,.22);
+  --accent-bg:rgba(139,92,246,.08);
+  --accent-bdr:rgba(139,92,246,.3);
+  --green:#10B981;
+  --green-bg:rgba(16,185,129,.1);
+  --cyan:#06B6D4;
+  --red:#F87171;
+  --amber:#F59E0B;
+  --text:#ECEEFF;
+  --text2:#8489AB;
+  --text3:#3F4367;
+  --r:8px;
+  --r-lg:14px;
+  --r-xl:20px;
+  --font-head:'Outfit',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --font-mono:'Space Mono',monospace;
 }
-html{font-size:15px}
+html{font-size:14px}
 body{
-  font-family:'Space Grotesk',sans-serif;
+  font-family:var(--font-body);
   background:var(--bg);
   color:var(--text);
   min-height:100vh;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  padding:2rem 1rem 4rem;
+  padding:2rem 1rem 0;
+  display:flex;flex-direction:column;align-items:center;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 70% 50% at 20% 0%, rgba(139,92,246,.07) 0%, transparent 60%),
+             radial-gradient(ellipse 50% 40% at 80% 100%, rgba(6,182,212,.05) 0%, transparent 60%);
+  pointer-events:none;z-index:0;
 }
 
-/* Header */
-.header{text-align:center;margin-bottom:2.5rem}
-.header-badge{
-  display:inline-flex;align-items:center;gap:6px;
-  background:var(--accent-bg);border:1px solid var(--accent);
-  color:var(--accent);border-radius:100px;
-  padding:4px 14px;font-size:12px;font-weight:600;
-  letter-spacing:.04em;text-transform:uppercase;margin-bottom:1rem;
+/* ── TOPBAR ── */
+.topbar{
+  width:100%;max-width:970px;
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:1.5rem;position:relative;z-index:10;
 }
-.header h1{font-size:2.4rem;font-weight:700;letter-spacing:-.03em;line-height:1.1}
-.header h1 span{color:var(--accent)}
-.header p{color:var(--text-2);margin-top:.5rem;font-size:1rem}
+.topbar-logo{
+  font-family:var(--font-head);font-size:1.15rem;font-weight:900;
+  letter-spacing:-.04em;color:var(--text);
+}
+.topbar-logo em{
+  font-style:normal;
+  background:linear-gradient(125deg,#A78BFA,#7C3AED,#06B6D4);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.topbar-right{display:flex;align-items:center;gap:.6rem}
 
-/* Tab switcher */
-.tabs{
-  display:flex;gap:6px;
+/* ── COUNTER BADGE ── */
+.counter-badge{
+  display:flex;align-items:center;gap:6px;
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:100px;padding:.28rem .75rem;
+  font-size:.72rem;font-weight:500;color:var(--text2);
+  transition:all .3s;font-family:var(--font-body);
+}
+.counter-badge .count-num{
+  font-family:var(--font-mono);
+  font-size:.75rem;color:var(--accent);font-weight:700;
+}
+.counter-badge .dot{width:6px;height:6px;background:var(--green);border-radius:50%;flex-shrink:0}
+@keyframes countPop{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+.count-num.pop{animation:countPop .35s ease}
+
+/* ── ACCOUNT BUTTON ── */
+.acct-btn{
+  display:flex;align-items:center;gap:6px;
+  background:var(--accent-bg);border:1px solid var(--accent-bdr);
+  color:var(--accent);border-radius:var(--r);
+  padding:.38rem .75rem;font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:all .15s;font-family:var(--font-body);
+}
+.acct-btn:hover{background:var(--accent);color:#fff}
+.acct-btn svg{width:14px;height:14px;flex-shrink:0}
+.acct-avatar{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--cyan));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.68rem;font-weight:700;color:#fff;flex-shrink:0;
+  font-family:var(--font-head);
+}
+
+/* ── HEADER ── */
+.hdr{text-align:center;margin-bottom:1.75rem;position:relative;z-index:1}
+.hdr-eye{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font-mono);font-size:11px;font-weight:700;
+  color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.55rem;
+}
+.hdr-eye::before,.hdr-eye::after{content:'';width:28px;height:1px;background:var(--accent-bdr)}
+.hdr h1{
+  font-family:var(--font-head);font-size:2.7rem;font-weight:900;
+  letter-spacing:-.05em;line-height:1.02;color:var(--text);
+}
+.hdr h1 em{
+  font-style:normal;
+  background:linear-gradient(125deg,#A78BFA 0%,#7C3AED 55%,#06B6D4 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hdr p{font-size:.88rem;color:var(--text2);margin-top:.4rem;font-family:var(--font-body)}
+
+/* ── MODE TABS ── */
+.mode-tabs{
+  display:flex;gap:4px;
   background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius-lg);padding:5px;
-  margin-bottom:2rem;
+  border-radius:var(--r-lg);padding:4px;
+  margin-bottom:1.5rem;position:relative;z-index:1;
 }
-.tab-btn{
-  flex:1;padding:.6rem 2rem;border:none;background:transparent;
-  color:var(--text-2);font-family:inherit;font-size:.9rem;font-weight:500;
-  border-radius:var(--radius);cursor:pointer;transition:all .2s;white-space:nowrap;
+.mode-btn{
+  display:flex;align-items:center;gap:7px;
+  padding:.5rem 1.4rem;border:none;background:transparent;
+  color:var(--text2);font-family:var(--font-body);
+  font-size:.9rem;font-weight:600;
+  border-radius:var(--r);cursor:pointer;transition:all .2s;
 }
-.tab-btn.active{background:var(--accent);color:#fff}
-.tab-btn:not(.active):hover{background:var(--card);color:var(--text)}
+.mode-btn.active{background:var(--accent);color:#fff;box-shadow:0 2px 14px rgba(139,92,246,.4)}
+.mode-btn:not(.active):hover{background:var(--card2);color:var(--text)}
+.mode-btn svg{width:15px;height:15px;flex-shrink:0}
 
-/* Main layout */
-.main{
-  display:grid;grid-template-columns:400px 1fr;
-  gap:1.5rem;width:100%;max-width:960px;
+/* ── LAYOUT ── */
+.layout{
+  display:grid;grid-template-columns:375px 1fr;
+  gap:1.125rem;width:100%;max-width:970px;
+  position:relative;z-index:1;
 }
-
-/* Panel */
+/* ── PANEL ── */
 .panel{
   background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius-lg);padding:1.5rem;
+  border-radius:var(--r-xl);overflow:hidden;
 }
-.panel-title{
-  font-size:.75rem;font-weight:600;letter-spacing:.08em;
-  text-transform:uppercase;color:var(--text-3);margin-bottom:1.25rem;
+.stabs{display:flex;border-bottom:1px solid var(--border);background:var(--card)}
+.stab{
+  flex:1;padding:.62rem .2rem;border:none;background:transparent;
+  color:var(--text3);font-family:var(--font-body);
+  font-size:.7rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  cursor:pointer;transition:all .15s;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
 }
+.stab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.stab:hover:not(.active){color:var(--text2)}
+.scontent{padding:1.2rem}
+.spage{display:none}
+.spage.on{display:block}
 
-/* Form elements */
-.field{margin-bottom:1.1rem}
-.field label{display:block;font-size:.82rem;font-weight:500;color:var(--text-2);margin-bottom:.4rem}
-.field input,.field select,.field textarea{
-  width:100%;background:var(--card);border:1px solid var(--border);
-  border-radius:var(--radius);color:var(--text);font-family:inherit;
-  font-size:.9rem;padding:.55rem .8rem;transition:border-color .2s;outline:none;
+/* ── FORM ATOMS ── */
+.fg{margin-bottom:.9rem}
+.fg:last-child{margin-bottom:0}
+.fl{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:.77rem;font-weight:600;color:var(--text2);margin-bottom:.38rem;
+  font-family:var(--font-body);
 }
-.field textarea{min-height:90px;resize:vertical;line-height:1.5}
-.field input:hover,.field select:hover,.field textarea:hover{border-color:var(--border-hover)}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
-.field select{appearance:none;cursor:pointer;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239496B2' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:calc(100% - 10px) 50%;padding-right:30px;}
-.field input[type=color]{padding:3px 6px;height:36px;cursor:pointer}
-
-/* Color row */
-.color-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
-
-/* Range */
-.range-row{display:flex;align-items:center;gap:.75rem}
-.range-row input[type=range]{flex:1;accent-color:var(--accent)}
-.range-val{font-size:.82rem;font-weight:500;color:var(--accent);min-width:32px;text-align:right;font-family:'JetBrains Mono',monospace}
-
-/* Logo upload */
-.logo-upload{
-  border:1.5px dashed var(--border-hover);border-radius:var(--radius);
-  padding:1rem;text-align:center;cursor:pointer;transition:all .2s;
-  background:var(--card);position:relative;
+.fl span{font-family:var(--font-mono);font-size:.68rem;color:var(--accent)}
+.fi,.fsel,.fta{
+  width:100%;background:var(--card2);border:1px solid var(--border);
+  border-radius:var(--r);color:var(--text);font-family:var(--font-body);
+  font-size:.875rem;padding:.48rem .72rem;
+  transition:border-color .15s,box-shadow .15s;outline:none;
 }
-.logo-upload:hover{border-color:var(--accent);background:var(--accent-bg)}
-.logo-upload input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.logo-upload-icon{font-size:1.4rem;margin-bottom:.3rem;color:var(--text-3)}
-.logo-upload p{font-size:.8rem;color:var(--text-2)}
-.logo-upload p span{color:var(--accent)}
-.logo-preview-wrap{display:flex;align-items:center;gap:.75rem;margin-top:.75rem}
-.logo-preview-thumb{
-  width:44px;height:44px;border-radius:8px;object-fit:contain;
-  background:var(--bg);border:1px solid var(--border);padding:4px;
+.fta{min-height:76px;resize:vertical;line-height:1.5}
+.fi:hover,.fsel:hover,.fta:hover{border-color:var(--border-h)}
+.fi:focus,.fsel:focus,.fta:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.fi.valid{border-color:var(--green);box-shadow:0 0 0 3px rgba(16,185,129,.15)}
+.fi.invalid{border-color:var(--red);box-shadow:0 0 0 3px rgba(248,113,113,.12)}
+.fsel{
+  appearance:none;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238489AB' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:calc(100% - 10px) 50%;
+  padding-right:28px;
 }
-.logo-clear{
-  font-size:.75rem;color:var(--red);cursor:pointer;background:none;
-  border:none;font-family:inherit;padding:0;
+.fi[type=color]{padding:3px 5px;height:34px;cursor:pointer}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+.f3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem}
+.frow{display:flex;align-items:center;gap:.6rem}
+.frange{flex:1;accent-color:var(--accent);height:4px;cursor:pointer}
+.frval{font-family:var(--font-mono);font-size:.72rem;color:var(--accent);min-width:36px;text-align:right}
+.div{height:1px;background:var(--border);margin:.85rem 0}
+.sh{
+  font-size:.69rem;font-weight:700;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.09em;margin-bottom:.6rem;
+  font-family:var(--font-body);
 }
-.logo-clear:hover{text-decoration:underline}
-
-/* Divider */
-.divider{height:1px;background:var(--border);margin:1.2rem 0}
-
-/* Section label */
-.section-label{
-  font-size:.72rem;font-weight:600;color:var(--text-3);
-  text-transform:uppercase;letter-spacing:.06em;margin-bottom:.85rem;
+.pills{display:flex;gap:4px;flex-wrap:wrap}
+.pill{
+  padding:.3rem .65rem;border:1px solid var(--border);
+  background:var(--card2);color:var(--text2);
+  font-family:var(--font-body);font-size:.76rem;font-weight:500;
+  border-radius:100px;cursor:pointer;transition:all .15s;
 }
+.pill.on{background:var(--accent-bg);border-color:var(--accent-bdr);color:var(--accent)}
+.pill:hover:not(.on){border-color:var(--border-h);color:var(--text)}
+.ecgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:.5rem}
+.ecbtn{
+  padding:.38rem;border:1px solid var(--border);background:var(--card2);
+  color:var(--text2);font-family:var(--font-mono);
+  font-size:.85rem;font-weight:700;border-radius:var(--r);
+  cursor:pointer;text-align:center;transition:all .15s;
+}
+.ecbtn.on{background:var(--accent-bg);border-color:var(--accent-bdr);color:var(--accent)}
+.ecbtn:hover:not(.on){border-color:var(--border-h);color:var(--text)}
+.fck{display:flex;align-items:center;gap:.45rem}
+.fck input{width:auto;accent-color:var(--accent);cursor:pointer}
+.fck label{font-size:.82rem;color:var(--text2);cursor:pointer;font-family:var(--font-body)}
+.conds{display:none}
+.conds.on{display:block}
+.ferr{font-size:.73rem;color:var(--red);margin-top:.28rem;display:none;font-family:var(--font-body)}
+.hint{font-size:.72rem;color:var(--cyan);padding:.38rem .6rem;background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.15);border-radius:var(--r);margin-bottom:.6rem;display:none;font-family:var(--font-body)}
 
-/* Preview panel */
-.preview-panel{
-  display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:1.5rem;
+/* ── COLOR ROW WITH HEX ── */
+.color-row{display:flex;align-items:center;gap:.5rem}
+.color-row input[type=color]{flex-shrink:0;width:40px}
+.hex-inp{
+  flex:1;background:var(--card2);border:1px solid var(--border);
+  border-radius:var(--r);color:var(--text);font-family:var(--font-mono);
+  font-size:.8rem;padding:.48rem .55rem;transition:border-color .15s,box-shadow .15s;
+  outline:none;text-transform:uppercase;
+}
+.hex-inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+
+/* logo upload */
+.logo-drop{
+  border:1.5px dashed var(--border-h);border-radius:var(--r);
+  padding:.85rem;text-align:center;cursor:pointer;
+  transition:all .2s;background:var(--card2);position:relative;
+}
+.logo-drop:hover{border-color:var(--accent);background:var(--accent-bg)}
+.logo-drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.logo-drop-txt{font-size:.77rem;color:var(--text2);font-family:var(--font-body)}
+.logo-drop-txt strong{color:var(--accent)}
+.logo-prev{
+  display:flex;align-items:center;gap:.6rem;
+  margin-top:.6rem;padding:.45rem .6rem;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+}
+.logo-thumb{width:34px;height:34px;border-radius:6px;object-fit:contain;background:#fff;padding:2px}
+.logo-name{font-size:.76rem;color:var(--text2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-body)}
+.logo-rm{font-size:.7rem;color:var(--red);background:none;border:none;cursor:pointer;font-family:var(--font-body)}
+.logo-rm:hover{text-decoration:underline}
+.resbtn{
+  padding:.32rem .6rem;background:var(--card2);color:var(--text2);
+  border:1px solid var(--border);border-radius:var(--r);
+  font-family:var(--font-mono);font-size:.72rem;cursor:pointer;transition:all .15s;
+}
+.resbtn.on{background:var(--accent-bg);border-color:var(--accent-bdr);color:var(--accent)}
+.resbtn:hover:not(.on){border-color:var(--border-h);color:var(--text)}
+
+/* ── SOCIAL SHORTCUTS ── */
+.soc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem;margin-bottom:.5rem}
+.soc-btn{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:.42rem .3rem;border:1px solid var(--border);background:var(--card2);
+  border-radius:var(--r);cursor:pointer;transition:all .15s;
+}
+.soc-btn:hover{border-color:var(--border-h);background:var(--card)}
+.soc-btn .soc-ico{font-size:1rem;line-height:1}
+.soc-btn .soc-lbl{font-size:.62rem;font-weight:600;color:var(--text2);font-family:var(--font-body)}
+.soc-btn:hover .soc-lbl{color:var(--text)}
+
+/* ── CAPACITY BAR ── */
+.cap-bar-wrap{margin-top:.5rem}
+.cap-bar-head{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:.68rem;color:var(--text3);margin-bottom:.28rem;font-family:var(--font-body);
+}
+.cap-bar-head span{font-family:var(--font-mono);color:var(--accent);font-size:.65rem}
+.cap-bar-track{height:4px;background:var(--card2);border-radius:100px;overflow:hidden;border:1px solid var(--border)}
+.cap-bar-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--green),var(--accent));transition:width .4s ease,background .3s}
+.cap-bar-fill.warn{background:linear-gradient(90deg,var(--amber),var(--red))}
+
+/* ── PREVIEW PANEL ── */
+.prev-panel{
   background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius-lg);padding:2rem;
-  min-height:480px;
+  border-radius:var(--r-xl);display:flex;flex-direction:column;
+  padding:1.25rem;gap:1rem;
 }
-.preview-canvas-wrap{
-  position:relative;display:flex;align-items:center;justify-content:center;
+.prev-topbar{display:flex;align-items:center;justify-content:space-between}
+.prev-title{
+  font-family:var(--font-head);font-size:.82rem;font-weight:700;
+  color:var(--text3);text-transform:uppercase;letter-spacing:.07em;
 }
-.preview-canvas-wrap canvas,.preview-canvas-wrap svg{
-  border-radius:var(--radius);max-width:100%;
+.bgbtns{display:flex;gap:4px}
+.bgbtn{
+  width:24px;height:24px;border-radius:6px;
+  border:1.5px solid var(--border);cursor:pointer;transition:all .15s;padding:0;
 }
-#qr-canvas{border-radius:var(--radius)}
-#barcode-svg{max-width:100%}
+.bgbtn.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
+.bgbtn.w{background:#fff}
+.bgbtn.d{background:#1a1c2e}
+.bgbtn.c{background-image:repeating-conic-gradient(#888 0% 25%,#ddd 0% 50%);background-size:8px 8px}
+.prev-area{
+  flex:1;min-height:320px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:var(--r-lg);transition:background .25s;
+  position:relative;overflow:hidden;
+}
+.prev-area.w{background:#fff}
+.prev-area.d{background:#1a1c2e}
+.prev-area.c{background-image:repeating-conic-gradient(#bbb 0% 25%,#f0f0f0 0% 50%);background-size:16px 16px}
+@keyframes scanAnim{0%{top:0;opacity:.9}100%{top:100%;opacity:0}}
+.scanline{
+  position:absolute;left:0;right:0;top:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  pointer-events:none;z-index:10;
+  animation:scanAnim .65s ease-out forwards;display:none;
+}
+.prev-empty{text-align:center;color:var(--text3);padding:2rem;user-select:none}
+.prev-empty-icon{margin-bottom:.6rem;opacity:.25}
+.prev-empty p{font-size:.85rem;font-family:var(--font-body)}
+#qr-canvas{border-radius:8px;max-width:100%;max-height:340px}
+#bc-svg{max-width:100%}
+.statrow{display:flex;align-items:center;justify-content:space-between}
+.statbadge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:.71rem;font-weight:700;padding:.22rem .6rem;border-radius:100px;
+  font-family:var(--font-body);
+}
+.statbadge.ready{background:var(--green-bg);color:var(--green)}
+.statbadge.ready::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green)}
+.statbadge.busy{background:var(--accent-bg);color:var(--accent);animation:pulse .9s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+.statstxt{font-family:var(--font-mono);font-size:.65rem;color:var(--text3)}
+.actrow{display:flex;gap:.45rem;flex-wrap:wrap}
+.btnp{
+  display:flex;align-items:center;gap:.4rem;
+  padding:.5rem 1.1rem;background:var(--accent);color:#fff;
+  border:none;border-radius:var(--r);font-family:var(--font-body);
+  font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s;
+}
+.btnp:hover{background:var(--accent-d);transform:translateY(-1px);box-shadow:0 4px 12px rgba(139,92,246,.4)}
+.btns{
+  display:flex;align-items:center;gap:.4rem;
+  padding:.5rem .9rem;background:var(--card2);color:var(--text2);
+  border:1px solid var(--border);border-radius:var(--r);
+  font-family:var(--font-body);font-size:.82rem;font-weight:500;
+  cursor:pointer;transition:all .15s;
+}
+.btns:hover{border-color:var(--border-h);color:var(--text)}
+.btns svg,.btnp svg{width:13px;height:13px;flex-shrink:0}
+.btn-save-qr{
+  display:flex;align-items:center;gap:.4rem;
+  padding:.5rem .9rem;background:var(--green-bg);color:var(--green);
+  border:1px solid rgba(16,185,129,.25);border-radius:var(--r);
+  font-family:var(--font-body);font-size:.82rem;font-weight:500;
+  cursor:pointer;transition:all .15s;
+}
+.btn-save-qr:hover{background:var(--green);color:#fff}
+.btn-print{
+  display:flex;align-items:center;gap:.4rem;
+  padding:.5rem .9rem;background:rgba(6,182,212,.08);color:var(--cyan);
+  border:1px solid rgba(6,182,212,.25);border-radius:var(--r);
+  font-family:var(--font-body);font-size:.82rem;font-weight:500;
+  cursor:pointer;transition:all .15s;
+}
+.btn-print:hover{background:var(--cyan);color:#000}
 
-.preview-empty{
-  text-align:center;
-  color:var(--text-3);
+/* history */
+.hist-hd{font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);margin-bottom:.5rem;font-family:var(--font-body)}
+.hist-strip{display:flex;gap:.45rem;overflow-x:auto;padding-bottom:.2rem}
+.hist-strip::-webkit-scrollbar{height:3px}
+.hist-strip::-webkit-scrollbar-thumb{background:var(--border-h);border-radius:3px}
+.hist-item{
+  flex-shrink:0;width:52px;cursor:pointer;
+  border-radius:var(--r);overflow:hidden;
+  border:1.5px solid var(--border);transition:all .15s;
 }
-.preview-empty svg{width:56px;height:56px;margin-bottom:.75rem;opacity:.35}
-.preview-empty p{font-size:.9rem}
+.hist-item:hover{border-color:var(--accent);transform:translateY(-2px)}
+.hist-item canvas{width:100%;display:block}
+.hist-lbl{font-size:.52rem;color:var(--text3);text-align:center;padding:1px 2px;background:var(--card);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-body)}
 
-/* Download btn */
-.download-btn{
-  display:flex;align-items:center;gap:.5rem;
-  padding:.65rem 1.6rem;border-radius:var(--radius);
-  background:var(--accent);border:none;color:#fff;
-  font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;
-  transition:all .15s;
+/* ── MODAL OVERLAY ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(6,7,26,.88);
+  backdrop-filter:blur(10px);z-index:500;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s;
 }
-.download-btn:hover{background:var(--accent-dim);transform:translateY(-1px)}
-.download-btn:active{transform:translateY(0)}
-.download-btn svg{width:16px;height:16px}
-
-.download-row{display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center}
-.download-format{
-  font-size:.75rem;color:var(--text-2);cursor:pointer;
-  background:var(--card);border:1px solid var(--border);
-  padding:.4rem .85rem;border-radius:100px;font-family:inherit;
-  font-weight:500;transition:all .15s;
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-xl);width:100%;max-width:420px;
+  padding:1.75rem;position:relative;
+  transform:translateY(16px) scale(.97);transition:all .2s cubic-bezier(.175,.885,.32,1.275);
 }
-.download-format:hover{border-color:var(--accent);color:var(--accent)}
-
-/* QR Error correction */
-.ec-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem}
-.ec-btn{
-  padding:.45rem .3rem;border-radius:8px;border:1px solid var(--border);
-  background:var(--card);color:var(--text-2);font-family:inherit;
-  font-size:.78rem;font-weight:600;cursor:pointer;text-align:center;transition:all .15s;
+.modal-overlay.open .modal{transform:translateY(0) scale(1)}
+.modal-close{
+  position:absolute;top:.9rem;right:.9rem;
+  background:var(--card2);border:1px solid var(--border);
+  color:var(--text2);width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:1rem;transition:all .15s;
 }
-.ec-btn.active{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
-.ec-btn:hover:not(.active){border-color:var(--border-hover);color:var(--text)}
+.modal-close:hover{background:var(--border-h);color:var(--text)}
+.modal-title{
+  font-family:var(--font-head);font-size:1.3rem;font-weight:800;
+  color:var(--text);margin-bottom:.25rem;letter-spacing:-.04em;
+}
+.modal-sub{font-size:.8rem;color:var(--text2);margin-bottom:1.2rem;font-family:var(--font-body)}
+.modal-tabs{display:flex;gap:4px;background:var(--card);border-radius:var(--r);padding:3px;margin-bottom:1.1rem}
+.mtab{
+  flex:1;padding:.4rem;border:none;background:transparent;
+  color:var(--text2);font-family:var(--font-body);font-size:.82rem;font-weight:600;
+  border-radius:6px;cursor:pointer;transition:all .15s;text-align:center;
+}
+.mtab.active{background:var(--accent);color:#fff}
+.modal-page{display:none}
+.modal-page.on{display:block}
+.modal .fg{margin-bottom:.75rem}
+.modal .fl{font-size:.76rem}
+.modal-submit{
+  width:100%;padding:.6rem;background:var(--accent);color:#fff;
+  border:none;border-radius:var(--r);font-family:var(--font-body);
+  font-size:.9rem;font-weight:700;cursor:pointer;transition:all .15s;margin-top:.25rem;
+}
+.modal-submit:hover{background:var(--accent-d)}
+.modal-err{font-size:.74rem;color:var(--red);margin-top:.35rem;display:none;font-family:var(--font-body)}
+.modal-info{font-size:.74rem;color:var(--text2);margin-top:.75rem;text-align:center;font-family:var(--font-body)}
+.modal-info a{color:var(--accent);cursor:pointer;text-decoration:none}
+.modal-info a:hover{text-decoration:underline}
 
-/* Error msg */
-.error-msg{
-  font-size:.8rem;color:var(--red);margin-top:.35rem;display:none;
+/* ── SAVED QR PANEL ── */
+.saved-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
+  gap:.65rem;margin-top:.75rem;max-height:340px;overflow-y:auto;
+}
+.saved-item{
+  border-radius:var(--r);overflow:hidden;
+  border:1.5px solid var(--border);cursor:pointer;
+  transition:all .15s;background:var(--card2);
+  position:relative;
+}
+.saved-item:hover{border-color:var(--accent);transform:translateY(-2px)}
+.saved-item canvas{width:100%;display:block}
+.saved-item-lbl{font-size:.56rem;color:var(--text2);text-align:center;padding:3px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-body)}
+.saved-item-del{
+  position:absolute;top:3px;right:3px;
+  width:16px;height:16px;background:rgba(248,113,113,.85);
+  border-radius:50%;display:none;align-items:center;justify-content:center;
+  font-size:.6rem;color:#fff;cursor:pointer;border:none;
+}
+.saved-item:hover .saved-item-del{display:flex}
+.saved-empty{text-align:center;padding:2rem;color:var(--text3);font-size:.82rem;font-family:var(--font-body)}
+.user-info-bar{
+  display:flex;align-items:center;gap:.75rem;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:.55rem .8rem;margin-bottom:1rem;
+}
+.user-info-bar .uname{font-size:.85rem;font-weight:700;color:var(--text);flex:1;font-family:var(--font-head)}
+.user-info-bar .uemail{font-size:.7rem;color:var(--text2);font-family:var(--font-body)}
+.logout-btn{
+  font-size:.72rem;color:var(--red);background:none;border:none;
+  cursor:pointer;font-family:var(--font-body);
+}
+.logout-btn:hover{text-decoration:underline}
+
+/* ── STATS BAR ── */
+.stats-bar{
+  width:100%;max-width:970px;
+  display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:.65rem 1.25rem;
+  margin-bottom:1.25rem;position:relative;z-index:1;
+}
+.stat-item{
+  display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:var(--text2);font-family:var(--font-body);
+}
+.stat-item strong{
+  font-family:var(--font-mono);font-size:.8rem;
+  color:var(--text);font-weight:700;
+}
+.stat-sep{width:1px;height:14px;background:var(--border);flex-shrink:0}
+.stat-live{
+  display:flex;align-items:center;gap:5px;
+  font-size:.7rem;font-weight:700;color:var(--green);margin-left:auto;
+  font-family:var(--font-body);
+}
+.stat-live::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);animation:livepulse 1.4s infinite}
+@keyframes livepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:1.75rem;right:1.75rem;
+  background:var(--card2);border:1px solid var(--border-h);
+  color:var(--text);padding:.6rem 1rem;border-radius:var(--r);
+  font-size:.82rem;box-shadow:0 8px 28px rgba(0,0,0,.5);
+  transform:translateY(80px) scale(.97);opacity:0;
+  transition:all .25s cubic-bezier(.175,.885,.32,1.275);z-index:1000;
+  font-family:var(--font-body);
+}
+.toast.show{transform:translateY(0) scale(1);opacity:1}
+.toast.ok{border-left:3px solid var(--green)}
+.toast.er{border-left:3px solid var(--red)}
+.toast.inf{border-left:3px solid var(--accent)}
+
+/* ── BULK / BATCH TAB ── */
+.batch-list{display:flex;flex-direction:column;gap:.4rem;margin-top:.4rem;max-height:160px;overflow-y:auto}
+.batch-row{
+  display:flex;align-items:center;gap:.4rem;
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:var(--r);padding:.3rem .5rem;font-size:.75rem;color:var(--text2);
+  font-family:var(--font-body);
+}
+.batch-row span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.batch-row button{
+  background:none;border:none;color:var(--red);
+  cursor:pointer;font-size:.7rem;padding:0 2px;font-family:var(--font-body);
 }
 
-/* Success badge */
-.gen-badge{
-  display:inline-flex;align-items:center;gap:5px;font-size:.75rem;
-  background:var(--green-bg);color:var(--green);
-  padding:.3rem .7rem;border-radius:100px;font-weight:600;
-}
-.gen-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green)}
+/* ── SHARE ROW ── */
+.share-row{display:flex;gap:.4rem;margin-top:.75rem}
 
-/* Responsive */
-@media(max-width:800px){
-  .main{grid-template-columns:1fr}
-  .preview-panel{min-height:300px}
-  .header h1{font-size:1.8rem}
+/* ── PRINT STYLES ── */
+@media print{
+  body>*:not(#print-target){display:none!important}
+  #print-target{display:block!important;position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#fff}
+  #print-target canvas,#print-target svg{max-width:80vmin;max-height:80vmin}
+}
+
+/* ── FOOTER ── */
+.site-footer{
+  width:100%;max-width:970px;
+  margin-top:3rem;padding:1.25rem 0 2rem;
+  border-top:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;
+  gap:.35rem;position:relative;z-index:1;
+}
+.footer-brand{
+  font-family:var(--font-head);font-size:.82rem;font-weight:700;color:var(--text3);
+  letter-spacing:-.01em;
+}
+.footer-brand em{
+  font-style:normal;
+  background:linear-gradient(125deg,#A78BFA,#7C3AED,#06B6D4);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.footer-copy{
+  font-size:.72rem;color:var(--text3);font-family:var(--font-body);
+  text-align:center;line-height:1.6;
+}
+.footer-copy strong{color:var(--text2);font-weight:600}
+.footer-sep{margin:0 .4rem;opacity:.4}
+
+/* ══════════════════════════════════════════
+   ── SCANNER SECTION ──
+══════════════════════════════════════════ */
+#scanner-wrap{
+  width:100%;max-width:970px;
+  position:relative;z-index:1;
+  display:none;
+}
+.scanner-panel{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-xl);padding:1.5rem;
+}
+.scanner-panel-hd{margin-bottom:1.2rem}
+.scanner-panel-hd h2{
+  font-family:var(--font-head);font-size:1.25rem;font-weight:800;
+  color:var(--text);letter-spacing:-.04em;margin-bottom:.2rem;
+}
+.scanner-panel-hd p{font-size:.82rem;color:var(--text2);font-family:var(--font-body)}
+.scan-src-tabs{
+  display:inline-flex;gap:4px;background:var(--card);
+  border-radius:var(--r);padding:3px;margin-bottom:1.25rem;
+}
+.scan-src-tab{
+  display:flex;align-items:center;gap:6px;
+  padding:.42rem 1rem;border:none;background:transparent;
+  color:var(--text2);font-family:var(--font-body);font-size:.85rem;font-weight:600;
+  border-radius:6px;cursor:pointer;transition:all .15s;
+}
+.scan-src-tab svg{width:13px;height:13px;flex-shrink:0}
+.scan-src-tab.active{background:var(--accent);color:#fff}
+.scan-src-tab:not(.active):hover{background:var(--card2);color:var(--text)}
+
+.scan-body{
+  display:grid;grid-template-columns:1.1fr 1fr;gap:1.25rem;align-items:start;
+}
+
+/* Camera area */
+.cam-area{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);
+  aspect-ratio:4/3;position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+#scan-video{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:none;
+}
+.cam-overlay-ui{
+  position:absolute;inset:0;
+  display:none;align-items:center;justify-content:center;
+  pointer-events:none;
+}
+.cam-overlay-ui.on{display:flex}
+.cam-finder-box{
+  width:54%;aspect-ratio:1;
+  border:2.5px solid var(--accent);border-radius:14px;
+  position:relative;overflow:hidden;
+  box-shadow:0 0 0 9999px rgba(6,7,26,.52);
+}
+.finder-scan-line{
+  position:absolute;left:0;right:0;height:2px;top:5%;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  animation:finderScanAnim 1.7s ease-in-out infinite alternate;
+}
+@keyframes finderScanAnim{0%{top:5%}100%{top:92%}}
+.cam-idle-msg{
+  display:flex;flex-direction:column;align-items:center;
+  gap:.55rem;text-align:center;padding:1.5rem;
+  position:relative;z-index:1;
+}
+.cam-idle-msg p{font-size:.8rem;font-family:var(--font-body);color:var(--text3)}
+.cam-idle-msg strong{color:var(--accent)}
+.scan-controls{
+  display:flex;gap:.45rem;flex-wrap:wrap;
+  align-items:center;margin-top:.8rem;
+}
+.scan-hint-txt{
+  font-size:.69rem;color:var(--text3);margin-top:.5rem;
+  font-family:var(--font-body);line-height:1.5;
+}
+
+/* Image drop area */
+.img-scan-drop{
+  background:var(--card);border:1.5px dashed var(--border-h);
+  border-radius:var(--r-lg);aspect-ratio:4/3;
+  position:relative;overflow:hidden;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+.img-scan-drop:hover,.img-scan-drop.drag-over{
+  border-color:var(--accent);background:var(--accent-bg);
+}
+.img-scan-drop input[type=file]{
+  position:absolute;inset:0;opacity:0;cursor:pointer;
+  width:100%;height:100%;
+}
+.img-scan-drop-inner{
+  display:flex;flex-direction:column;align-items:center;
+  gap:.45rem;pointer-events:none;text-align:center;padding:1rem;
+}
+.img-scan-drop-inner p{font-size:.78rem;color:var(--text2);font-family:var(--font-body)}
+.img-scan-drop-inner strong{color:var(--accent)}
+.img-scan-drop-inner .fmt-note{font-size:.68rem;opacity:.65}
+#scan-img-preview{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:contain;display:none;background:var(--card);
+}
+
+/* Hidden canvas for decoding */
+#scan-canvas-hidden{display:none}
+
+/* Result panel */
+.scan-result-panel{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:1.1rem;min-height:270px;display:flex;flex-direction:column;
+  transition:border-color .35s,box-shadow .35s;
+}
+.scan-result-panel.found{
+  border-color:var(--green);
+  box-shadow:0 0 0 3px rgba(16,185,129,.12);
+}
+.scan-result-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:.75rem;flex-wrap:wrap;gap:.4rem;
+}
+.scan-result-title{
+  font-size:.69rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.09em;color:var(--text3);font-family:var(--font-body);
+}
+.scan-type-badge{
+  font-size:.67rem;font-weight:700;
+  padding:.15rem .5rem;border-radius:100px;
+  background:var(--accent-bg);color:var(--accent);
+  border:1px solid var(--accent-bdr);font-family:var(--font-body);
+  display:none;
+}
+.scan-result-placeholder{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:.4rem;text-align:center;padding:1rem 0;
+}
+.scan-result-placeholder p{font-size:.8rem;font-family:var(--font-body);color:var(--text3)}
+.scan-result-val{
+  font-family:var(--font-mono);font-size:.8rem;color:var(--text);
+  word-break:break-all;line-height:1.65;display:none;
+  max-height:180px;overflow-y:auto;flex:1;
+  padding-right:2px;
+}
+.scan-result-val::-webkit-scrollbar{width:3px}
+.scan-result-val::-webkit-scrollbar-thumb{background:var(--border-h);border-radius:3px}
+.scan-action-row{
+  display:flex;gap:.4rem;flex-wrap:wrap;
+  margin-top:.85rem;padding-top:.75rem;
+  border-top:1px solid var(--border);
+}
+.btn-scan-open{
+  display:flex;align-items:center;gap:.4rem;
+  padding:.5rem .9rem;background:rgba(6,182,212,.08);color:var(--cyan);
+  border:1px solid rgba(6,182,212,.25);border-radius:var(--r);
+  font-family:var(--font-body);font-size:.82rem;font-weight:500;
+  cursor:pointer;transition:all .15s;
+}
+.btn-scan-open:hover{background:var(--cyan);color:#000}
+.btn-scan-open svg{width:13px;height:13px;flex-shrink:0}
+
+/* scanning animation on cam area border */
+@keyframes scanBorder{
+  0%,100%{border-color:var(--accent)}
+  50%{border-color:rgba(139,92,246,.3)}
+}
+.cam-area.scanning{animation:scanBorder 1s ease-in-out infinite}
+
+/* ── RESPONSIVE ── */
+@media(max-width:820px){
+  .layout{grid-template-columns:1fr}
+  .prev-area{min-height:260px}
+  .hdr h1{font-size:2rem}
+  .stats-bar{gap:.6rem}
+}
+@media(max-width:680px){
+  .scan-body{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-badge">⬡ Generator</div>
-  <h1>QR & <span>Barcode</span> Generator</h1>
-  <p>Generate codes for links, text, SKUs, products and more</p>
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">Code<em>Craft</em></div>
+  <div class="topbar-right">
+    <div class="counter-badge" title="Total QR codes generated">
+      <span class="dot"></span>
+      <span id="global-count-num" class="count-num">0</span>
+      <span>codes generated</span>
+    </div>
+    <button class="acct-btn" id="acct-btn" onclick="openAccountModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <span id="acct-btn-label">Sign in</span>
+    </button>
+  </div>
 </div>
 
-<div class="tabs">
-  <button class="tab-btn active" onclick="switchTab('qr')">⬜ QR Code</button>
-  <button class="tab-btn" onclick="switchTab('barcode')">▮▯▮▮ Barcode</button>
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-eye">CodeCraft Studio</div>
+  <h1>QR &amp; <em>Barcode</em> Generator</h1>
+  <p>Professional code generation — links, contacts, products, locations &amp; more</p>
 </div>
 
-<div class="main">
-  <!-- Left: Controls -->
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+    <span>Total generated:</span>
+    <strong id="sb-total">0</strong>
+  </div>
+  <div class="stat-sep"></div>
+  <div class="stat-item">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+    <span>This session:</span>
+    <strong id="sb-session">0</strong>
+  </div>
+  <div class="stat-sep"></div>
+  <div class="stat-item">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2"><path d="M19 21H5a2 2 0 01-2-2V7l7-4 7 4v12a2 2 0 01-2 2z"/></svg>
+    <span>Downloads:</span>
+    <strong id="sb-dl">0</strong>
+  </div>
+  <div class="stat-sep"></div>
+  <div class="stat-item">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.2"><path d="M19 21H5a2 2 0 01-2-2V7l7-4 7 4v12a2 2 0 01-2 2z"/></svg>
+    <span>Saved:</span>
+    <strong id="sb-saved">0</strong>
+  </div>
+  <div class="stat-live">● Live</div>
+</div>
+
+<!-- MODE TABS -->
+<div class="mode-tabs">
+  <button class="mode-btn active" id="btn-qr" onclick="switchMode('qr')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="5" y="5" width="3" height="3" fill="currentColor" stroke="none"/><rect x="16" y="5" width="3" height="3" fill="currentColor" stroke="none"/><rect x="5" y="16" width="3" height="3" fill="currentColor" stroke="none"/><circle cx="17" cy="17" r="1.2" fill="currentColor" stroke="none"/><rect x="14.5" y="14.5" width="2" height="5" fill="currentColor" stroke="none"/><rect x="14.5" y="19.5" width="5" height="2" fill="currentColor" stroke="none"/></svg>
+    QR Code
+  </button>
+  <button class="mode-btn" id="btn-bc" onclick="switchMode('barcode')">
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="3" y="4" width="2.2" height="16"/><rect x="7" y="4" width="1.1" height="16"/><rect x="10" y="4" width="2.2" height="16"/><rect x="14.2" y="4" width="1.1" height="16"/><rect x="17" y="4" width="2.2" height="16"/><rect x="21" y="4" width="1" height="16"/></svg>
+    Barcode
+  </button>
+  <button class="mode-btn" id="btn-scan" onclick="switchMode('scan')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7V5a2 2 0 012-2h2"/><path d="M17 3h2a2 2 0 012 2v2"/><path d="M21 17v2a2 2 0 01-2 2h-2"/><path d="M7 21H5a2 2 0 01-2-2v-2"/><line x1="3" y1="12" x2="21" y2="12" stroke-width="2"/></svg>
+    Scan QR
+  </button>
+</div>
+
+<!-- ══ GENERATOR LAYOUT ══ -->
+<div class="layout" id="layout-wrap">
+  <!-- ══ SETTINGS PANEL ══ -->
   <div class="panel">
-
-    <!-- QR CONTROLS -->
-    <div id="qr-controls">
-      <p class="panel-title">QR Code settings</p>
-
-      <div class="field">
-        <label>Content type</label>
-        <select id="qr-type" onchange="updateQRPlaceholder()">
-          <option value="text">Free text</option>
-          <option value="url">URL / Link</option>
-          <option value="email">Email address</option>
-          <option value="phone">Phone number</option>
-          <option value="sku">SKU / Product ID</option>
-          <option value="wifi">Wi-Fi credentials</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Content</label>
-        <textarea id="qr-text" placeholder="Enter text, URL, or any content…" oninput="debouncedGenQR()"></textarea>
-        <div class="error-msg" id="qr-error"></div>
-      </div>
-
-      <!-- Wi-Fi fields (hidden by default) -->
-      <div id="wifi-fields" style="display:none">
-        <div class="field">
-          <label>Network name (SSID)</label>
-          <input type="text" id="wifi-ssid" placeholder="MyNetwork" oninput="debouncedGenQR()">
-        </div>
-        <div class="field">
-          <label>Password</label>
-          <input type="password" id="wifi-pass" placeholder="••••••••" oninput="debouncedGenQR()">
-        </div>
-        <div class="field">
-          <label>Security</label>
-          <select id="wifi-sec" onchange="debouncedGenQR()">
-            <option>WPA</option><option>WEP</option><option>nopass</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-      <p class="section-label">Error correction</p>
-      <div class="ec-grid" style="margin-bottom:1.1rem">
-        <button class="ec-btn" onclick="setEC('L',this)" title="Low – 7%">L</button>
-        <button class="ec-btn active" onclick="setEC('M',this)" title="Medium – 15%">M</button>
-        <button class="ec-btn" onclick="setEC('Q',this)" title="Quartile – 25%">Q</button>
-        <button class="ec-btn" onclick="setEC('H',this)" title="High – 30%">H</button>
-      </div>
-
-      <div class="divider"></div>
-      <p class="section-label">Colors</p>
-      <div class="color-row">
-        <div class="field">
-          <label>QR color</label>
-          <input type="color" id="qr-fg" value="#000000" oninput="debouncedGenQR()">
-        </div>
-        <div class="field">
-          <label>Background</label>
-          <input type="color" id="qr-bg" value="#ffffff" oninput="debouncedGenQR()">
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Size (px)</label>
-        <div class="range-row">
-          <input type="range" id="qr-size" min="128" max="512" value="256" step="16" oninput="updateSizeLabel();debouncedGenQR()">
-          <span class="range-val" id="qr-size-label">256</span>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-      <p class="section-label">Brand logo overlay</p>
-
-      <div class="logo-upload" id="logo-drop">
-        <input type="file" id="logo-input" accept="image/*" onchange="handleLogo(event)">
-        <div class="logo-upload-icon">⊕</div>
-        <p><span>Click to upload</span> or drag & drop<br>PNG, JPG, SVG, WebP</p>
-      </div>
-
-      <div id="logo-controls" style="display:none">
-        <div class="logo-preview-wrap">
-          <img class="logo-preview-thumb" id="logo-thumb" src="" alt="Logo preview">
-          <div>
-            <div style="font-size:.82rem;font-weight:500;color:var(--text-2)" id="logo-name"></div>
-            <button class="logo-clear" onclick="clearLogo()">✕ Remove logo</button>
-          </div>
-        </div>
-        <div class="field" style="margin-top:.85rem">
-          <label>Logo size</label>
-          <div class="range-row">
-            <input type="range" id="logo-size" min="10" max="35" value="22" oninput="updateLogoLabel();debouncedGenQR()">
-            <span class="range-val" id="logo-size-label">22%</span>
-          </div>
-        </div>
-        <div class="field">
-          <label>Logo padding (px)</label>
-          <div class="range-row">
-            <input type="range" id="logo-pad" min="0" max="20" value="8" oninput="updateLogoPadLabel();debouncedGenQR()">
-            <span class="range-val" id="logo-pad-label">8</span>
-          </div>
-        </div>
-      </div>
+    <div class="stabs" id="stabs">
+      <button class="stab active" onclick="switchStab('content',this)">Content</button>
+      <button class="stab" onclick="switchStab('style',this)">Style</button>
+      <button class="stab" id="logo-stab" onclick="switchStab('logo',this)">Logo</button>
+      <button class="stab" onclick="switchStab('batch',this)">Batch</button>
+      <button class="stab" onclick="switchStab('export',this)">Export</button>
     </div>
+    <div class="scontent">
 
-    <!-- BARCODE CONTROLS -->
-    <div id="barcode-controls" style="display:none">
-      <p class="panel-title">Barcode settings</p>
+      <!-- ══ CONTENT PAGE ══ -->
+      <div class="spage on" id="pg-content">
+        <div id="qr-cfields">
 
-      <div class="field">
-        <label>Format</label>
-        <select id="bc-format" onchange="debouncedGenBC()">
-          <option value="CODE128">CODE 128 (universal)</option>
-          <option value="EAN13">EAN-13 (retail)</option>
-          <option value="UPC">UPC-A (retail US)</option>
-          <option value="EAN8">EAN-8 (small retail)</option>
-          <option value="CODE39">CODE 39 (industrial)</option>
-          <option value="ITF14">ITF-14 (shipping)</option>
-          <option value="MSI">MSI (inventory)</option>
-          <option value="pharmacode">Pharmacode</option>
-        </select>
-      </div>
+          <!-- Social Shortcuts -->
+          <div class="fg" id="social-shortcuts-wrap">
+            <div class="fl">Quick fill — social &amp; platforms</div>
+            <div class="soc-grid">
+              <button class="soc-btn" onclick="fillSocial('https://instagram.com/','url')"><span class="soc-ico">🅾</span><span class="soc-lbl">Instagram</span></button>
+              <button class="soc-btn" onclick="fillSocial('https://x.com/','url')"><span class="soc-ico">𝕏</span><span class="soc-lbl">X / Twitter</span></button>
+              <button class="soc-btn" onclick="fillSocial('https://facebook.com/','url')"><span class="soc-ico">ⓕ</span><span class="soc-lbl">Facebook</span></button>
+              <button class="soc-btn" onclick="fillSocial('https://linkedin.com/in/','url')"><span class="soc-ico">[in]</span><span class="soc-lbl">LinkedIn</span></button>
+              <button class="soc-btn" onclick="fillSocial('https://youtube.com/@','url')"><span class="soc-ico">▶</span><span class="soc-lbl">YouTube</span></button>
+              <button class="soc-btn" onclick="fillSocial('https://github.com/','url')"><span class="soc-ico">𝐆</span><span class="soc-lbl">GitHub</span></button>
+            </div>
+          </div>
 
-      <div class="field">
-        <label>Value</label>
-        <input type="text" id="bc-text" placeholder="Enter barcode value…" oninput="debouncedGenBC()">
-        <div class="error-msg" id="bc-error"></div>
-      </div>
+          <div class="div"></div>
 
-      <div class="divider"></div>
-      <p class="section-label">Colors</p>
-      <div class="color-row">
-        <div class="field">
-          <label>Bar color</label>
-          <input type="color" id="bc-fg" value="#000000" oninput="debouncedGenBC()">
+          <div class="fg">
+            <div class="fl">Content type</div>
+            <select class="fsel" id="qr-type" onchange="onTypeChange()">
+              <option value="text">Free text</option>
+              <option value="url">URL / Link</option>
+              <option value="email">Email address</option>
+              <option value="phone">Phone number</option>
+              <option value="sms">SMS message</option>
+              <option value="wifi">Wi-Fi credentials</option>
+              <option value="vcard">Contact / vCard</option>
+              <option value="geo">Geo location</option>
+              <option value="calendar">Calendar event</option>
+              <option value="sku">SKU / Product ID</option>
+            </select>
+          </div>
+          <div id="def-txt" class="fg">
+            <div class="fl">Content</div>
+            <textarea class="fta" id="qr-txt" placeholder="Enter any text, URL, or data…" oninput="dQR();validateContent()"></textarea>
+            <div class="ferr" id="qr-err"></div>
+          </div>
+          <div class="conds" id="wifi-f">
+            <div class="fg"><div class="fl">Network (SSID)</div><input class="fi" type="text" id="w-ssid" placeholder="MyNetwork" oninput="dQR()"></div>
+            <div class="fg"><div class="fl">Password</div><input class="fi" type="text" id="w-pass" placeholder="••••••••" oninput="dQR()"></div>
+            <div class="fg"><div class="fl">Security</div><select class="fsel" id="w-sec" onchange="dQR()"><option>WPA</option><option>WEP</option><option>nopass</option></select></div>
+            <div class="fck"><input type="checkbox" id="w-hidden" onchange="dQR()"><label for="w-hidden">Hidden network</label></div>
+          </div>
+          <div class="conds" id="vc-f">
+            <div class="f2">
+              <div class="fg"><div class="fl">First name</div><input class="fi" type="text" id="vc-fn" placeholder="Jane" oninput="dQR()"></div>
+              <div class="fg"><div class="fl">Last name</div><input class="fi" type="text" id="vc-ln" placeholder="Smith" oninput="dQR()"></div>
+            </div>
+            <div class="fg"><div class="fl">Phone</div><input class="fi" type="text" id="vc-ph" placeholder="+1 555 000 1234" oninput="dQR()"></div>
+            <div class="fg"><div class="fl">Email</div><input class="fi" type="email" id="vc-em" placeholder="jane@example.com" oninput="dQR()"></div>
+            <div class="fg"><div class="fl">Organization</div><input class="fi" type="text" id="vc-org" placeholder="Acme Corp" oninput="dQR()"></div>
+            <div class="fg"><div class="fl">Website</div><input class="fi" type="url" id="vc-url" placeholder="https://example.com" oninput="dQR()"></div>
+          </div>
+          <div class="conds" id="sms-f">
+            <div class="fg"><div class="fl">Phone number</div><input class="fi" type="text" id="sms-ph" placeholder="+1 555 000 1234" oninput="dQR()"></div>
+            <div class="fg"><div class="fl">Message</div><textarea class="fta" id="sms-msg" placeholder="Your message…" oninput="dQR()"></textarea></div>
+          </div>
+          <div class="conds" id="geo-f">
+            <div class="f2">
+              <div class="fg"><div class="fl">Latitude</div><input class="fi" type="number" id="geo-lat" placeholder="37.7749" step="any" oninput="dQR()"></div>
+              <div class="fg"><div class="fl">Longitude</div><input class="fi" type="number" id="geo-lng" placeholder="-122.4194" step="any" oninput="dQR()"></div>
+            </div>
+            <div class="fg"><div class="fl">Label (optional)</div><input class="fi" type="text" id="geo-lbl" placeholder="San Francisco, CA" oninput="dQR()"></div>
+          </div>
+          <div class="conds" id="cal-f">
+            <div class="fg"><div class="fl">Event title</div><input class="fi" type="text" id="cal-ttl" placeholder="Team Meeting" oninput="dQR()"></div>
+            <div class="f2">
+              <div class="fg"><div class="fl">Start</div><input class="fi" type="datetime-local" id="cal-s" oninput="dQR()"></div>
+              <div class="fg"><div class="fl">End</div><input class="fi" type="datetime-local" id="cal-e" oninput="dQR()"></div>
+            </div>
+            <div class="fg"><div class="fl">Location</div><input class="fi" type="text" id="cal-loc" placeholder="Room A" oninput="dQR()"></div>
+            <div class="fg"><div class="fl">Notes</div><textarea class="fta" style="min-height:56px" id="cal-desc" placeholder="Optional…" oninput="dQR()"></textarea></div>
+          </div>
+
+          <!-- Capacity bar -->
+          <div class="cap-bar-wrap" id="cap-bar-wrap" style="display:none">
+            <div class="cap-bar-head">
+              <span>QR capacity used</span>
+              <span id="cap-pct">0%</span>
+            </div>
+            <div class="cap-bar-track"><div class="cap-bar-fill" id="cap-bar-fill" style="width:0%"></div></div>
+          </div>
+
+          <div class="div"></div>
+          <div class="sh">Error correction</div>
+          <div class="ecgrid">
+            <button class="ecbtn" onclick="setEC('L',this)" title="7% data recovery">L</button>
+            <button class="ecbtn on" onclick="setEC('M',this)" title="15% data recovery">M</button>
+            <button class="ecbtn" onclick="setEC('Q',this)" title="25% data recovery">Q</button>
+            <button class="ecbtn" onclick="setEC('H',this)" title="30% — use with logo">H</button>
+          </div>
+          <p style="font-size:.69rem;color:var(--text3);font-family:var(--font-body)">Use <strong style="color:var(--accent)">H</strong> when adding a logo for best scan reliability</p>
         </div>
-        <div class="field">
-          <label>Background</label>
-          <input type="color" id="bc-bg" value="#ffffff" oninput="debouncedGenBC()">
+        <div id="bc-cfields" style="display:none">
+          <div class="fg">
+            <div class="fl">Format</div>
+            <select class="fsel" id="bc-fmt" onchange="onBCFmt();dBC()">
+              <option value="CODE128">CODE 128 — universal alphanumeric</option>
+              <option value="EAN13">EAN-13 — retail (13 digits)</option>
+              <option value="UPC">UPC-A — retail US (12 digits)</option>
+              <option value="EAN8">EAN-8 — compact retail (8 digits)</option>
+              <option value="CODE39">CODE 39 — industrial, uppercase</option>
+              <option value="ITF14">ITF-14 — shipping (14 digits)</option>
+              <option value="MSI">MSI — inventory management</option>
+              <option value="pharmacode">Pharmacode — pharmaceutical</option>
+              <option value="codabar">Codabar — libraries / blood banks</option>
+            </select>
+          </div>
+          <div class="hint" id="bc-hint"></div>
+          <div class="fg">
+            <div class="fl">Value</div>
+            <input class="fi" type="text" id="bc-txt" placeholder="Enter barcode value…" oninput="dBC()">
+            <div class="ferr" id="bc-err"></div>
+          </div>
         </div>
       </div>
 
-      <div class="field">
-        <label>Bar width</label>
-        <div class="range-row">
-          <input type="range" id="bc-width" min="1" max="4" value="2" step=".5" oninput="updateBCLabels();debouncedGenBC()">
-          <span class="range-val" id="bc-width-label">2</span>
+      <!-- ══ STYLE PAGE ══ -->
+      <div class="spage" id="pg-style">
+        <div id="qr-sfields">
+          <div class="sh">Module shape</div>
+          <div class="pills" style="margin-bottom:.85rem">
+            <button class="pill on" onclick="setPill(this,'moduleStyle','square')">Square</button>
+            <button class="pill" onclick="setPill(this,'moduleStyle','rounded')">Rounded</button>
+            <button class="pill" onclick="setPill(this,'moduleStyle','dots')">Dots</button>
+            <button class="pill" onclick="setPill(this,'moduleStyle','fluent')">Fluent</button>
+            <button class="pill" onclick="setPill(this,'moduleStyle','diamond')">Diamond</button>
+          </div>
+          <div class="sh">Corner eye style</div>
+          <div class="pills" style="margin-bottom:.85rem">
+            <button class="pill on" onclick="setPill(this,'eyeStyle','square')">Square</button>
+            <button class="pill" onclick="setPill(this,'eyeStyle','rounded')">Rounded</button>
+            <button class="pill" onclick="setPill(this,'eyeStyle','circle')">Circle</button>
+          </div>
+          <div class="div"></div>
+          <div class="sh">Foreground</div>
+          <div class="pills" style="margin-bottom:.75rem">
+            <button class="pill on" onclick="setPill(this,'gradMode','solid')">Solid</button>
+            <button class="pill" onclick="setPill(this,'gradMode','linear')">Linear gradient</button>
+            <button class="pill" onclick="setPill(this,'gradMode','radial')">Radial gradient</button>
+          </div>
+          <div class="f2">
+            <div class="fg">
+              <div class="fl">Color 1</div>
+              <div class="color-row">
+                <input type="color" class="fi" id="qr-fg" value="#7C3AED" oninput="syncHex('qr-fg','hex-fg');dQR()">
+                <input type="text" class="hex-inp" id="hex-fg" value="#7C3AED" maxlength="7" oninput="syncColor('hex-fg','qr-fg');dQR()">
+              </div>
+            </div>
+            <div class="fg" id="fg2-wrap">
+              <div class="fl">Color 2</div>
+              <div class="color-row">
+                <input type="color" class="fi" id="qr-fg2" value="#06B6D4" oninput="syncHex('qr-fg2','hex-fg2');dQR()">
+                <input type="text" class="hex-inp" id="hex-fg2" value="#06B6D4" maxlength="7" oninput="syncColor('hex-fg2','qr-fg2');dQR()">
+              </div>
+            </div>
+          </div>
+          <div class="fg" id="grad-ang-wrap">
+            <div class="fl">Gradient angle <span id="ang-lbl">135°</span></div>
+            <div class="frow"><input type="range" class="frange" id="qr-ang" min="0" max="360" value="135" oninput="updAng();dQR()"></div>
+          </div>
+          <div class="fg">
+            <div class="fl">Background</div>
+            <div class="color-row">
+              <input type="color" class="fi" id="qr-bg" value="#ffffff" oninput="syncHex('qr-bg','hex-bg');dQR()">
+              <input type="text" class="hex-inp" id="hex-bg" value="#FFFFFF" maxlength="7" oninput="syncColor('hex-bg','qr-bg');dQR()">
+            </div>
+          </div>
+          <div class="div"></div>
+          <div class="sh">Color presets</div>
+          <div class="pills" style="margin-bottom:.85rem">
+            <button class="pill" onclick="applyPreset('#7C3AED','#ffffff','solid')">Classic</button>
+            <button class="pill" onclick="applyPreset('#000000','#ffffff','solid')">Mono</button>
+            <button class="pill" onclick="applyPreset('#7C3AED','#06B6D4','linear')">Cosmic</button>
+            <button class="pill" onclick="applyPreset('#10B981','#06B6D4','linear')">Ocean</button>
+            <button class="pill" onclick="applyPreset('#F59E0B','#EF4444','radial')">Sunset</button>
+            <button class="pill" onclick="applyPreset('#EC4899','#8B5CF6','linear')">Candy</button>
+            <button class="pill" onclick="applyPreset('#1e293b','#38bdf8','solid','#f0f9ff')">Midnight</button>
+          </div>
+          <div class="div"></div>
+          <div class="sh">Frame</div>
+          <div class="pills" style="margin-bottom:.65rem">
+            <button class="pill on" onclick="setPill(this,'frameStyle','none')">None</button>
+            <button class="pill" onclick="setPill(this,'frameStyle','border')">Border</button>
+            <button class="pill" onclick="setPill(this,'frameStyle','badge')">Badge label</button>
+          </div>
+          <div id="frame-opts" style="display:none">
+            <div class="fg" id="frame-lbl-wrap" style="display:none">
+              <div class="fl">Label text</div>
+              <input class="fi" type="text" id="frame-lbl" value="SCAN ME" oninput="dQR()">
+            </div>
+            <div class="f2">
+              <div class="fg"><div class="fl">Frame color</div><input type="color" class="fi" id="frame-clr" value="#7C3AED" oninput="dQR()"></div>
+              <div class="fg"><div class="fl">Label color</div><input type="color" class="fi" id="frame-lclr" value="#ffffff" oninput="dQR()"></div>
+            </div>
+          </div>
+          <div class="div"></div>
+          <div class="sh">Size</div>
+          <div class="fg">
+            <div class="fl">Canvas size <span id="sz-lbl">320px</span></div>
+            <div class="frow"><input type="range" class="frange" id="qr-sz" min="128" max="600" value="320" step="16" oninput="updSz();dQR()"></div>
+          </div>
+        </div>
+        <div id="bc-sfields" style="display:none">
+          <div class="sh">Colors</div>
+          <div class="f2">
+            <div class="fg">
+              <div class="fl">Bar color</div>
+              <div class="color-row">
+                <input type="color" class="fi" id="bc-fg" value="#000000" oninput="syncHex('bc-fg','hex-bc-fg');dBC()">
+                <input type="text" class="hex-inp" id="hex-bc-fg" value="#000000" maxlength="7" oninput="syncColor('hex-bc-fg','bc-fg');dBC()">
+              </div>
+            </div>
+            <div class="fg">
+              <div class="fl">Background</div>
+              <div class="color-row">
+                <input type="color" class="fi" id="bc-bg" value="#ffffff" oninput="syncHex('bc-bg','hex-bc-bg');dBC()">
+                <input type="text" class="hex-inp" id="hex-bc-bg" value="#FFFFFF" maxlength="7" oninput="syncColor('hex-bc-bg','bc-bg');dBC()">
+              </div>
+            </div>
+          </div>
+          <div class="div"></div>
+          <div class="sh">Dimensions</div>
+          <div class="fg"><div class="fl">Bar width <span id="bcw-lbl">2</span></div><div class="frow"><input type="range" class="frange" id="bc-w" min="1" max="5" value="2" step=".5" oninput="updBC();dBC()"></div></div>
+          <div class="fg"><div class="fl">Bar height (px) <span id="bch-lbl">100</span></div><div class="frow"><input type="range" class="frange" id="bc-h" min="40" max="250" value="100" step="5" oninput="updBC();dBC()"></div></div>
+          <div class="fg"><div class="fl">Quiet zone (px) <span id="bcm-lbl">16</span></div><div class="frow"><input type="range" class="frange" id="bc-m" min="0" max="40" value="16" oninput="updBC();dBC()"></div></div>
+          <div class="div"></div>
+          <div class="sh">Label</div>
+          <div class="fck" style="margin-bottom:.7rem"><input type="checkbox" id="bc-shw" checked onchange="dBC()"><label for="bc-shw">Show text label below barcode</label></div>
+          <div class="fg"><div class="fl">Font size <span id="bcf-lbl">14</span></div><div class="frow"><input type="range" class="frange" id="bc-fs" min="8" max="28" value="14" oninput="updBC();dBC()"></div></div>
         </div>
       </div>
 
-      <div class="field">
-        <label>Height (px)</label>
-        <div class="range-row">
-          <input type="range" id="bc-height" min="40" max="200" value="80" step="5" oninput="updateBCLabels();debouncedGenBC()">
-          <span class="range-val" id="bc-height-label">80</span>
+      <!-- ══ LOGO PAGE ══ -->
+      <div class="spage" id="pg-logo">
+        <div id="qr-lfields">
+          <p style="font-size:.78rem;color:var(--text2);margin-bottom:.9rem;line-height:1.55;font-family:var(--font-body)">Overlay your brand logo. Set error correction to <strong style="color:var(--accent)">H</strong> for best scan reliability.</p>
+          <div class="logo-drop" id="logo-drop">
+            <input type="file" id="logo-inp" accept="image/*" onchange="handleLogo(event)">
+            <div style="font-size:1.4rem;margin-bottom:.25rem">⊕</div>
+            <div class="logo-drop-txt"><strong>Click to upload</strong> or drag &amp; drop<br>PNG · SVG · JPG · WebP</div>
+          </div>
+          <div id="logo-prev-wrap" style="display:none">
+            <div class="logo-prev">
+              <img class="logo-thumb" id="logo-thumb" src="" alt="">
+              <span class="logo-name" id="logo-nm"></span>
+              <button class="logo-rm" onclick="clearLogo()">✕ Remove</button>
+            </div>
+            <div class="fg" style="margin-top:.7rem"><div class="fl">Logo size <span id="lsz-lbl">22%</span></div><div class="frow"><input type="range" class="frange" id="l-sz" min="8" max="35" value="22" oninput="updLogo();dQR()"></div></div>
+            <div class="fg"><div class="fl">Padding (px) <span id="lpad-lbl">8</span></div><div class="frow"><input type="range" class="frange" id="l-pad" min="0" max="24" value="8" oninput="updLogo();dQR()"></div></div>
+            <div class="fg">
+              <div class="fl">Background shape</div>
+              <div class="pills">
+                <button class="pill on" onclick="setPill(this,'logoBg','square')">Square</button>
+                <button class="pill" onclick="setPill(this,'logoBg','rounded')">Rounded</button>
+                <button class="pill" onclick="setPill(this,'logoBg','circle')">Circle</button>
+              </div>
+            </div>
+            <div class="fg">
+              <div class="fl">Logo background</div>
+              <div class="color-row">
+                <input type="color" class="fi" id="l-bg" value="#ffffff" oninput="dQR()">
+                <input type="text" class="hex-inp" id="hex-l-bg" value="#FFFFFF" maxlength="7" oninput="syncColor('hex-l-bg','l-bg');dQR()">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="bc-lmsg" style="display:none;text-align:center;padding:2.5rem 1rem;color:var(--text3);font-size:.82rem;font-family:var(--font-body)">Logo overlay is available for QR codes only.</div>
+      </div>
+
+      <!-- ══ BATCH PAGE ══ -->
+      <div class="spage" id="pg-batch">
+        <p style="font-size:.78rem;color:var(--text2);margin-bottom:.85rem;line-height:1.55;font-family:var(--font-body)">Add multiple values to generate and download a set of QR codes at once.</p>
+        <div class="fg">
+          <div class="fl">Add entry</div>
+          <div style="display:flex;gap:.4rem">
+            <input class="fi" type="text" id="batch-inp" placeholder="URL, text, or any value…" onkeydown="if(event.key==='Enter')addBatch()">
+            <button class="btnp" style="padding:.48rem .9rem;white-space:nowrap" onclick="addBatch()">+ Add</button>
+          </div>
+        </div>
+        <div class="batch-list" id="batch-list"></div>
+        <div style="margin-top:.85rem;display:flex;gap:.4rem;flex-wrap:wrap">
+          <button class="btnp" onclick="dlBatch()" id="batch-dl-btn" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Download All PNG
+          </button>
+          <button class="btns" onclick="clearBatch()" id="batch-clr-btn" style="display:none">Clear list</button>
+        </div>
+        <p style="font-size:.69rem;color:var(--text3);margin-top:.6rem;font-family:var(--font-body)">Files download individually — one per entry.</p>
+      </div>
+
+      <!-- ══ EXPORT PAGE ══ -->
+      <div class="spage" id="pg-export">
+        <div class="sh">Resolution</div>
+        <div style="display:flex;gap:4px;margin-bottom:.5rem">
+          <button class="resbtn" onclick="setRes(1,this)">1×</button>
+          <button class="resbtn on" onclick="setRes(2,this)">2×</button>
+          <button class="resbtn" onclick="setRes(3,this)">3×</button>
+          <button class="resbtn" onclick="setRes(4,this)">4×</button>
+        </div>
+        <p style="font-size:.69rem;color:var(--text3);margin-bottom:.85rem;font-family:var(--font-body)">2× for screen, 3–4× for print.</p>
+        <div class="div"></div>
+        <div class="sh">File name</div>
+        <div class="fg">
+          <input class="fi" type="text" id="exp-fname" placeholder="qrcode" value="qrcode">
+        </div>
+        <div class="div"></div>
+        <div class="sh">Actions</div>
+        <div style="display:flex;flex-direction:column;gap:.45rem">
+          <button class="btns" style="width:100%;justify-content:center;gap:.5rem" onclick="clipCopy()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy image to clipboard
+          </button>
+          <button class="btn-print" style="width:100%;justify-content:center;gap:.5rem" onclick="printCode()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print code
+          </button>
+        </div>
+        <div class="div"></div>
+        <div class="sh">Share</div>
+        <div class="share-row">
+          <button class="btns" onclick="shareNative()" style="flex:1;justify-content:center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </button>
+          <button class="btns" onclick="copyDataUrl()" style="flex:1;justify-content:center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+            Copy link
+          </button>
+        </div>
+        <div class="div"></div>
+        <div class="sh">Available formats</div>
+        <div style="display:flex;flex-direction:column;gap:.35rem">
+          <div class="btns" style="cursor:default;justify-content:space-between;pointer-events:none">
+            <span>PNG</span><span style="font-size:.68rem;color:var(--green)">QR + Barcode</span>
+          </div>
+          <div class="btns" style="cursor:default;justify-content:space-between;pointer-events:none">
+            <span>SVG</span><span style="font-size:.68rem;color:var(--green)">QR + Barcode</span>
+          </div>
         </div>
       </div>
 
-      <div class="field" style="display:flex;align-items:center;gap:.6rem">
-        <input type="checkbox" id="bc-label" checked onchange="debouncedGenBC()" style="width:auto;accent-color:var(--accent)">
-        <label for="bc-label" style="margin:0;cursor:pointer">Show text label below</label>
-      </div>
-
-      <div class="field">
-        <label>Label font size</label>
-        <div class="range-row">
-          <input type="range" id="bc-fontsize" min="8" max="24" value="14" oninput="updateBCLabels();debouncedGenBC()">
-          <span class="range-val" id="bc-fontsize-label">14</span>
-        </div>
-      </div>
     </div>
-
   </div>
 
-  <!-- Right: Preview -->
-  <div class="preview-panel" id="preview-area">
-    <div class="preview-empty" id="empty-state">
-      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="4" y="4" width="24" height="24" rx="3" stroke="currentColor" stroke-width="2.5"/>
-        <rect x="10" y="10" width="12" height="12" rx="1" fill="currentColor"/>
-        <rect x="36" y="4" width="24" height="24" rx="3" stroke="currentColor" stroke-width="2.5"/>
-        <rect x="42" y="10" width="12" height="12" rx="1" fill="currentColor"/>
-        <rect x="4" y="36" width="24" height="24" rx="3" stroke="currentColor" stroke-width="2.5"/>
-        <rect x="10" y="42" width="12" height="12" rx="1" fill="currentColor"/>
-        <rect x="36" y="36" width="5" height="5" fill="currentColor"/>
-        <rect x="44" y="36" width="5" height="5" fill="currentColor"/>
-        <rect x="55" y="36" width="5" height="5" fill="currentColor"/>
-        <rect x="36" y="44" width="5" height="5" fill="currentColor"/>
-        <rect x="44" y="52" width="16" height="5" fill="currentColor"/>
-        <rect x="55" y="44" width="5" height="5" fill="currentColor"/>
-      </svg>
-      <p>Enter content to generate a code</p>
+  <!-- ══ PREVIEW PANEL ══ -->
+  <div class="prev-panel">
+    <div class="prev-topbar">
+      <div class="prev-title">Live Preview</div>
+      <div class="bgbtns">
+        <button class="bgbtn w on" title="White" onclick="setBg('w',this)"></button>
+        <button class="bgbtn d" title="Dark" onclick="setBg('d',this)"></button>
+        <button class="bgbtn c" title="Transparent" onclick="setBg('c',this)"></button>
+      </div>
     </div>
 
-    <div id="output-area" style="display:none;width:100%;display:flex;flex-direction:column;align-items:center;gap:1.25rem">
-      <div class="preview-canvas-wrap">
-        <canvas id="qr-canvas" style="display:none;border-radius:12px"></canvas>
-        <svg id="barcode-svg" style="display:none"></svg>
+    <div class="prev-area w" id="prev-area">
+      <div class="scanline" id="scanline"></div>
+      <div class="prev-empty" id="empty-st">
+        <div class="prev-empty-icon">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><rect x="4" y="4" width="22" height="22" rx="3" stroke="#3F4367" stroke-width="2.2"/><rect x="9" y="9" width="12" height="12" rx="1" fill="#3F4367"/><rect x="38" y="4" width="22" height="22" rx="3" stroke="#3F4367" stroke-width="2.2"/><rect x="43" y="9" width="12" height="12" rx="1" fill="#3F4367"/><rect x="4" y="38" width="22" height="22" rx="3" stroke="#3F4367" stroke-width="2.2"/><rect x="9" y="43" width="12" height="12" rx="1" fill="#3F4367"/><rect x="38" y="38" width="5" height="5" rx=".8" fill="#3F4367"/><rect x="46" y="38" width="5" height="5" rx=".8" fill="#3F4367"/><rect x="54" y="38" width="5" height="5" rx=".8" fill="#3F4367"/><rect x="38" y="46" width="5" height="5" rx=".8" fill="#3F4367"/><rect x="46" y="54" width="13" height="5" rx=".8" fill="#3F4367"/><rect x="54" y="46" width="5" height="5" rx=".8" fill="#3F4367"/></svg>
+        </div>
+        <p>Enter content to preview your code</p>
       </div>
-      <div class="gen-badge" id="gen-badge">Code ready</div>
-      <div class="download-row">
-        <button class="download-btn" id="dl-btn" onclick="downloadCode('png')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-          Download PNG
-        </button>
-        <button class="download-format" onclick="downloadCode('svg')" id="dl-svg-btn">SVG</button>
+      <canvas id="qr-canvas" style="display:none"></canvas>
+      <svg id="bc-svg" style="display:none"></svg>
+    </div>
+
+    <div class="statrow" id="stat-row" style="display:none">
+      <div class="statbadge ready" id="stat-badge">Ready</div>
+      <div class="statstxt" id="stat-txt"></div>
+    </div>
+
+    <div class="actrow" id="act-row" style="display:none">
+      <button class="btnp" onclick="dl('png')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        PNG
+      </button>
+      <button class="btns" onclick="dl('svg')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        SVG
+      </button>
+      <button class="btns" onclick="clipCopy()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy
+      </button>
+      <button class="btn-print" onclick="printCode()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print
+      </button>
+      <button class="btn-save-qr" onclick="saveCurrentQR()" id="save-qr-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M19 21H5a2 2 0 01-2-2V7l7-4 7 4v12a2 2 0 01-2 2z"/></svg>
+        Save
+      </button>
+    </div>
+
+    <div id="hist-wrap" style="display:none">
+      <div style="height:1px;background:var(--border);margin:.25rem 0"></div>
+      <div class="hist-hd">Recent codes</div>
+      <div class="hist-strip" id="hist-strip"></div>
+    </div>
+  </div>
+</div><!-- end #layout-wrap -->
+
+<!-- ══ SCANNER SECTION ══ -->
+<div id="scanner-wrap">
+  <div class="scanner-panel">
+    <div class="scanner-panel-hd">
+      <h2>QR Code Scanner</h2>
+      <p>Use your camera for live scanning, or upload an image containing a QR code</p>
+    </div>
+
+    <!-- Source tabs -->
+    <div class="scan-src-tabs">
+      <button class="scan-src-tab active" data-tab="camera" onclick="switchScanTab('camera')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Camera
+      </button>
+      <button class="scan-src-tab" data-tab="image" onclick="switchScanTab('image')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        From Image
+      </button>
+    </div>
+
+    <!-- Body: left input + right result -->
+    <div class="scan-body">
+
+      <!-- ── LEFT: Input area ── -->
+      <div>
+        <!-- Camera section -->
+        <div id="scan-cam-section">
+          <div class="cam-area" id="cam-area">
+            <div class="cam-idle-msg" id="cam-idle-msg">
+              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" style="opacity:.25"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <p>Click <strong>Start Camera</strong> to scan a QR code</p>
+            </div>
+            <video id="scan-video" autoplay playsinline muted></video>
+            <div class="cam-overlay-ui" id="cam-overlay-ui">
+              <div class="cam-finder-box">
+                <div class="finder-scan-line"></div>
+              </div>
+            </div>
+          </div>
+          <div class="scan-controls">
+            <button class="btnp" id="btn-start-cam" onclick="startCamera()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Start Camera
+            </button>
+            <button class="btns" id="btn-stop-cam" style="display:none" onclick="stopCamera()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+              Stop
+            </button>
+            <span id="cam-scanning-lbl" style="display:none;font-size:.75rem;color:var(--accent);font-family:var(--font-body);font-weight:600;animation:pulse .9s infinite">● Scanning…</span>
+          </div>
+          <p class="scan-hint-txt">Point your camera at a QR code — detection is automatic</p>
+        </div>
+
+        <!-- Image upload section -->
+        <div id="scan-img-section" style="display:none">
+          <div class="img-scan-drop" id="img-scan-drop">
+            <input type="file" id="scan-img-inp" accept="image/*" onchange="handleScanImage(event)">
+            <div id="img-drop-inner" class="img-scan-drop-inner">
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="opacity:.3"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <p><strong>Click to upload</strong> or drag &amp; drop</p>
+              <p class="fmt-note">PNG · JPG · WebP · GIF · BMP</p>
+            </div>
+            <img id="scan-img-preview" alt="Uploaded image for scanning">
+          </div>
+          <div class="scan-controls">
+            <button class="btns" id="btn-clear-scan-img" onclick="clearScanImage()" style="display:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+              Clear image
+            </button>
+            <button class="btns" id="btn-rescan-img" onclick="rescanImage()" style="display:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+              Re-scan
+            </button>
+          </div>
+          <p class="scan-hint-txt">Supports any image containing a standard QR code</p>
+        </div>
+
+        <!-- Hidden decode canvas -->
+        <canvas id="scan-canvas-hidden"></canvas>
+      </div>
+
+      <!-- ── RIGHT: Result panel ── -->
+      <div class="scan-result-panel" id="scan-result-panel">
+        <div class="scan-result-hd">
+          <div class="scan-result-title">Scan Result</div>
+          <div class="scan-type-badge" id="scan-type-badge"></div>
+        </div>
+
+        <!-- Placeholder -->
+        <div class="scan-result-placeholder" id="scan-result-placeholder">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" style="opacity:.18"><path d="M3 7V5a2 2 0 012-2h2"/><path d="M17 3h2a2 2 0 012 2v2"/><path d="M21 17v2a2 2 0 01-2 2h-2"/><path d="M7 21H5a2 2 0 01-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg>
+          <p>Scan result will appear here</p>
+        </div>
+
+        <!-- Decoded value -->
+        <div class="scan-result-val" id="scan-result-val"></div>
+
+        <!-- Actions -->
+        <div class="scan-action-row" id="scan-action-row" style="display:none">
+          <button class="btnp" onclick="useScanResult()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            Use in Generator
+          </button>
+          <button class="btns" onclick="copyScanResult()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+          </button>
+          <button class="btn-scan-open" id="btn-scan-open-url" onclick="openScanURL()" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Open URL
+          </button>
+          <button class="btns" onclick="resetScanResult()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+            Scan Again
+          </button>
+        </div>
+      </div>
+
+    </div><!-- end .scan-body -->
+  </div><!-- end .scanner-panel -->
+</div><!-- end #scanner-wrap -->
+
+<!-- ══ ACCOUNT MODAL ══ -->
+<div class="modal-overlay" id="account-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('account-modal')">×</button>
+    <div id="auth-view">
+      <div class="modal-title">Welcome back</div>
+      <div class="modal-sub">Sign in to save and sync your QR codes across devices</div>
+      <div class="modal-tabs">
+        <button class="mtab active" id="mt-login" onclick="switchMTab('login')">Sign in</button>
+        <button class="mtab" id="mt-signup" onclick="switchMTab('signup')">Create account</button>
+      </div>
+      <div class="modal-page on" id="mp-login">
+        <div class="fg"><div class="fl">Email</div><input class="fi" type="email" id="login-email" placeholder="you@example.com"></div>
+        <div class="fg"><div class="fl">Password</div><input class="fi" type="password" id="login-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <div class="ferr" id="login-err"></div>
+        <button class="modal-submit" onclick="doLogin()">Sign in</button>
+        <div class="modal-info">Don't have an account? <a onclick="switchMTab('signup')">Create one — it's free</a></div>
+      </div>
+      <div class="modal-page" id="mp-signup">
+        <div class="fg"><div class="fl">Name</div><input class="fi" type="text" id="signup-name" placeholder="Jane Smith"></div>
+        <div class="fg"><div class="fl">Email</div><input class="fi" type="email" id="signup-email" placeholder="you@example.com"></div>
+        <div class="fg"><div class="fl">Password</div><input class="fi" type="password" id="signup-pw" placeholder="At least 6 characters" onkeydown="if(event.key==='Enter')doSignup()"></div>
+        <div class="ferr" id="signup-err"></div>
+        <button class="modal-submit" onclick="doSignup()">Create account</button>
+        <div class="modal-info">Already have an account? <a onclick="switchMTab('login')">Sign in</a></div>
+      </div>
+    </div>
+    <div id="loggedin-view" style="display:none">
+      <div class="modal-title">My QR Codes</div>
+      <div class="user-info-bar" id="user-info-bar">
+        <div class="acct-avatar" id="user-avatar">J</div>
+        <div>
+          <div class="uname" id="user-name-lbl">Jane Smith</div>
+          <div class="uemail" id="user-email-lbl">jane@example.com</div>
+        </div>
+        <button class="logout-btn" onclick="doLogout()">Sign out</button>
+      </div>
+      <div class="saved-grid" id="saved-grid">
+        <div class="saved-empty">No saved codes yet. Generate one and click <strong>Save</strong>!</div>
       </div>
     </div>
   </div>
 </div>
+
+<div class="toast" id="toast"></div>
+
+<!-- PRINT FRAME (hidden) -->
+<div id="print-target" style="display:none"></div>
+
+<!-- ══ FOOTER ══ -->
+<footer class="site-footer">
+  <div class="footer-brand">Code<em>Craft</em> Studio</div>
+  <div class="footer-copy">
+    © 2026 <strong>Md. Sahabul</strong>. All rights reserved.
+    <span class="footer-sep">·</span>
+    Designed &amp; developed by <strong>Md. Sahabul</strong>
+  </div>
+</footer>
 
 <script>
-let currentTab = 'qr';
-let currentEC = 'M';
-let logoImg = null;
-let qrDebounce, bcDebounce;
+/* ═══════════════════════════════ STATE ═══════════════════════════════ */
+let mode='qr',ec='M',logoImg=null,exportScale=2;
+let qrT,bcT;
+let codeHistory=[];
+let batchItems=[];
+let opts={moduleStyle:'square',eyeStyle:'square',gradMode:'solid',frameStyle:'none',logoBg:'square'};
+let currentUser=null;
+let lastQRVersion=0;
 
-function switchTab(tab){
-  currentTab = tab;
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',i===(tab==='qr'?0:1)));
-  document.getElementById('qr-controls').style.display = tab==='qr'?'':'none';
-  document.getElementById('barcode-controls').style.display = tab==='barcode'?'':'none';
-  if(tab==='qr') debouncedGenQR(); else debouncedGenBC();
+const fmtHints={
+  EAN13:'Exactly 13 digits (checksum auto-calculated)',
+  UPC:'Exactly 12 digits (11 + checksum)',
+  EAN8:'Exactly 8 digits',
+  ITF14:'Exactly 14 digits',
+  pharmacode:'Integer between 3 and 131070',
+  codabar:'Starts/ends with A B C or D; digits and - $ : / . +',
+  CODE39:'Uppercase A–Z, digits 0–9, and — . $ / + % space',
+};
+
+const QR_MAX_BYTES_M=[17,32,53,78,106,134,154,192,230,271,321,367,425,458,520,586,644,718,792,858,929,1003,1091,1171,1273,1367,1465,1528,1628,1732,1840,1952,2068,2188,2303,2431,2563,2699,2809,2953];
+
+/* ═══════════════════════════════ COLOR HEX SYNC ═══════════════════════════════ */
+function syncHex(colorId,hexId){
+  const val=document.getElementById(colorId).value;
+  document.getElementById(hexId).value=val.toUpperCase();
+}
+function syncColor(hexId,colorId){
+  let val=document.getElementById(hexId).value.trim();
+  if(!val.startsWith('#')) val='#'+val;
+  if(/^#[0-9A-Fa-f]{6}$/.test(val)){
+    document.getElementById(colorId).value=val;
+  }
 }
 
-function setEC(v,el){
-  currentEC=v;
-  document.querySelectorAll('.ec-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  debouncedGenQR();
+/* ═══════════════════════════════ CAPACITY BAR ═══════════════════════════════ */
+function updateCapacity(content){
+  const wrap=document.getElementById('cap-bar-wrap');
+  const fill=document.getElementById('cap-bar-fill');
+  const pctEl=document.getElementById('cap-pct');
+  if(!content){wrap.style.display='none';return}
+  wrap.style.display='block';
+  const bytes=new TextEncoder().encode(content).length;
+  const maxBytes=QR_MAX_BYTES_M[lastQRVersion>0?lastQRVersion-1:9];
+  const pct=Math.min(100,Math.round((bytes/maxBytes)*100));
+  fill.style.width=pct+'%';
+  fill.classList.toggle('warn',pct>80);
+  pctEl.textContent=pct+'%';
 }
 
-function updateQRPlaceholder(){
+/* ═══════════════════════════════ URL VALIDATOR ═══════════════════════════════ */
+function validateContent(){
   const t=document.getElementById('qr-type').value;
-  const txt=document.getElementById('qr-text');
-  const wf=document.getElementById('wifi-fields');
-  const placeholders={
-    text:'Hello, world! Enter any text here…',
-    url:'https://example.com',
-    email:'hello@example.com',
-    phone:'+1 555 000 1234',
-    sku:'SKU-001234 / PROD-ABCDE',
-    wifi:''
-  };
-  txt.placeholder=placeholders[t]||'Enter content…';
-  wf.style.display=t==='wifi'?'':'none';
-  if(t==='wifi') txt.style.display='none';
-  else txt.style.display='';
-  debouncedGenQR();
+  const el=document.getElementById('qr-txt');
+  if(t!=='url'){el.classList.remove('valid','invalid');return}
+  const v=el.value.trim();
+  if(!v){el.classList.remove('valid','invalid');return}
+  try{
+    new URL(v.startsWith('http')?v:'https://'+v);
+    el.classList.add('valid');el.classList.remove('invalid');
+  }catch{
+    el.classList.add('invalid');el.classList.remove('valid');
+  }
 }
 
-function getQRContent(){
+/* ═══════════════════════════════ SOCIAL SHORTCUTS ═══════════════════════════════ */
+function fillSocial(prefix,type){
+  const typeEl=document.getElementById('qr-type');
+  typeEl.value=type;
+  onTypeChange();
+  const txtEl=document.getElementById('qr-txt');
+  txtEl.value=prefix;
+  txtEl.focus();
+  txtEl.setSelectionRange(txtEl.value.length,txtEl.value.length);
+  dQR();
+}
+
+/* ═══════════════════════════════ PRINT ═══════════════════════════════ */
+function printCode(){
+  const canvas=document.getElementById('qr-canvas');
+  const svg=document.getElementById('bc-svg');
+  const target=document.getElementById('print-target');
+  if(canvas.style.display!=='none'){
+    const img=document.createElement('img');
+    img.src=canvas.toDataURL('image/png');
+    img.style.cssText='max-width:80%;max-height:80%;display:block;margin:auto';
+    target.innerHTML='';target.appendChild(img);
+  } else if(svg.style.display!=='none'){
+    target.innerHTML=svg.outerHTML;
+    target.querySelector('svg').style.cssText='max-width:90%;margin:auto;display:block';
+  } else {
+    toast('Generate a code first.','er');return;
+  }
+  target.style.cssText='display:flex;align-items:center;justify-content:center;position:fixed;inset:0;background:#fff;z-index:9999';
+  window.print();
+  setTimeout(()=>{target.style.display='none'},500);
+}
+
+/* ═══════════════════════════════ COUNTER SYSTEM ═══════════════════════════════ */
+let sessionCount=0,dlCount=0,savedCount=0;
+function getGlobalCount(){return parseInt(localStorage.getItem('cc_global_count')||'0')}
+function incGlobalCount(){
+  const n=getGlobalCount()+1;
+  localStorage.setItem('cc_global_count',n);
+  sessionCount++;
+  updateCounterUI(n);
+}
+function updateCounterUI(n){
+  const el=document.getElementById('global-count-num');
+  el.textContent=formatCount(n);
+  el.classList.remove('pop');void el.offsetHeight;el.classList.add('pop');
+  document.getElementById('sb-total').textContent=formatCount(n);
+  document.getElementById('sb-session').textContent=sessionCount;
+}
+function formatCount(n){
+  if(n>=1000000) return (n/1000000).toFixed(1)+'M';
+  if(n>=1000) return (n/1000).toFixed(1)+'K';
+  return n.toString();
+}
+function initCounter(){
+  const n=getGlobalCount();
+  document.getElementById('global-count-num').textContent=formatCount(n);
+  document.getElementById('sb-total').textContent=formatCount(n);
+}
+
+/* ═══════════════════════════════ ACCOUNT SYSTEM ═══════════════════════════════ */
+function getUsers(){return JSON.parse(localStorage.getItem('cc_users')||'{}')}
+function saveUsers(u){localStorage.setItem('cc_users',JSON.stringify(u))}
+function getSavedCodes(email){return JSON.parse(localStorage.getItem('cc_saved_'+email)||'[]')}
+function setSavedCodes(email,codes){localStorage.setItem('cc_saved_'+email,JSON.stringify(codes))}
+
+function loadSession(){
+  const s=localStorage.getItem('cc_session');
+  if(!s) return;
+  try{const u=JSON.parse(s);currentUser=u;applyLoggedIn(u);}catch{}
+}
+
+function doLogin(){
+  const em=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-pw').value;
+  const err=document.getElementById('login-err');
+  if(!em||!pw){err.textContent='Please fill in all fields.';err.style.display='block';return}
+  const users=getUsers();
+  if(!users[em]||users[em].pw!==btoa(pw)){err.textContent='Incorrect email or password.';err.style.display='block';return}
+  err.style.display='none';
+  currentUser={name:users[em].name,email:em};
+  localStorage.setItem('cc_session',JSON.stringify(currentUser));
+  applyLoggedIn(currentUser);
+  toast('Welcome back, '+currentUser.name+'!','ok');
+}
+
+function doSignup(){
+  const name=document.getElementById('signup-name').value.trim();
+  const em=document.getElementById('signup-email').value.trim();
+  const pw=document.getElementById('signup-pw').value;
+  const err=document.getElementById('signup-err');
+  if(!name||!em||!pw){err.textContent='Please fill in all fields.';err.style.display='block';return}
+  if(pw.length<6){err.textContent='Password must be at least 6 characters.';err.style.display='block';return}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){err.textContent='Please enter a valid email.';err.style.display='block';return}
+  const users=getUsers();
+  if(users[em]){err.textContent='An account with that email already exists.';err.style.display='block';return}
+  users[em]={name,pw:btoa(pw)};saveUsers(users);
+  currentUser={name,email:em};
+  localStorage.setItem('cc_session',JSON.stringify(currentUser));
+  err.style.display='none';
+  applyLoggedIn(currentUser);
+  toast('Account created! Welcome, '+name+'!','ok');
+}
+
+function doLogout(){
+  currentUser=null;localStorage.removeItem('cc_session');
+  document.getElementById('loggedin-view').style.display='none';
+  document.getElementById('auth-view').style.display='block';
+  document.getElementById('acct-btn-label').textContent='Sign in';
+  updateSavedCount(0);
+  toast('Signed out.','inf');
+  closeModal('account-modal');
+}
+
+function applyLoggedIn(u){
+  document.getElementById('acct-btn-label').textContent=u.name.split(' ')[0];
+  document.getElementById('user-name-lbl').textContent=u.name;
+  document.getElementById('user-email-lbl').textContent=u.email;
+  document.getElementById('user-avatar').textContent=u.name[0].toUpperCase();
+  document.getElementById('auth-view').style.display='none';
+  document.getElementById('loggedin-view').style.display='block';
+  renderSavedGrid();
+}
+
+function openAccountModal(){
+  if(currentUser){
+    document.getElementById('auth-view').style.display='none';
+    document.getElementById('loggedin-view').style.display='block';
+    renderSavedGrid();
+  } else {
+    document.getElementById('auth-view').style.display='block';
+    document.getElementById('loggedin-view').style.display='none';
+  }
+  openModal('account-modal');
+}
+
+function saveCurrentQR(){
+  const canvas=document.getElementById('qr-canvas');
+  if(canvas.style.display==='none'){toast('Generate a QR code first.','er');return}
+  if(!currentUser){toast('Sign in to save codes.','inf');openModal('account-modal');return}
+  const label=getContent().slice(0,24)||'QR Code';
+  const dataURL=canvas.toDataURL('image/png');
+  const codes=getSavedCodes(currentUser.email);
+  codes.unshift({dataURL,label,ts:Date.now()});
+  if(codes.length>50) codes.pop();
+  setSavedCodes(currentUser.email,codes);
+  renderSavedGrid();
+  updateSavedCount(codes.length);
+  toast('Saved to your account!','ok');
+}
+
+function renderSavedGrid(){
+  if(!currentUser) return;
+  const codes=getSavedCodes(currentUser.email);
+  const grid=document.getElementById('saved-grid');
+  if(!codes.length){grid.innerHTML='<div class="saved-empty">No saved codes yet. Generate one and click <strong>Save</strong>!</div>';return}
+  grid.innerHTML='';
+  updateSavedCount(codes.length);
+  codes.forEach((c,i)=>{
+    const item=document.createElement('div');item.className='saved-item';
+    const img=document.createElement('img');img.src=c.dataURL;img.style.cssText='width:100%;display:block';
+    const lbl=document.createElement('div');lbl.className='saved-item-lbl';lbl.textContent=c.label;
+    const del=document.createElement('button');del.className='saved-item-del';del.textContent='×';del.title='Delete';
+    del.onclick=(e)=>{e.stopPropagation();deleteSaved(i)};
+    item.onclick=()=>{const a=document.createElement('a');a.download='saved-qr.png';a.href=c.dataURL;a.click()};
+    item.appendChild(img);item.appendChild(lbl);item.appendChild(del);
+    grid.appendChild(item);
+  });
+}
+
+function deleteSaved(idx){
+  const codes=getSavedCodes(currentUser.email);
+  codes.splice(idx,1);
+  setSavedCodes(currentUser.email,codes);
+  renderSavedGrid();
+  updateSavedCount(codes.length);
+  toast('Removed.','inf');
+}
+
+function updateSavedCount(n){
+  savedCount=n;
+  document.getElementById('sb-saved').textContent=n;
+}
+
+/* ═══════════════════════════════ MODAL HELPERS ═══════════════════════════════ */
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o) o.classList.remove('open')});
+});
+function switchMTab(t){
+  ['login','signup'].forEach(x=>{
+    document.getElementById('mt-'+x).classList.toggle('active',x===t);
+    document.getElementById('mp-'+x).classList.toggle('on',x===t);
+  });
+}
+
+/* ═══════════════════════════════ MODE ═══════════════════════════════ */
+function switchMode(m){
+  mode=m;
+  const isScan=m==='scan';
+
+  // Show/hide main layout vs scanner
+  document.getElementById('layout-wrap').style.display=isScan?'none':'grid';
+  document.getElementById('scanner-wrap').style.display=isScan?'block':'none';
+
+  // Stop camera if leaving scan mode
+  if(!isScan && scanActive) stopCamera();
+
+  // Update mode button states
+  document.getElementById('btn-qr').classList.toggle('active',m==='qr');
+  document.getElementById('btn-bc').classList.toggle('active',m==='barcode');
+  document.getElementById('btn-scan').classList.toggle('active',isScan);
+
+  if(!isScan){
+    document.getElementById('qr-cfields').style.display=m==='qr'?'':'none';
+    document.getElementById('bc-cfields').style.display=m==='barcode'?'':'none';
+    document.getElementById('qr-sfields').style.display=m==='qr'?'':'none';
+    document.getElementById('bc-sfields').style.display=m==='barcode'?'':'none';
+    document.getElementById('qr-lfields').style.display=m==='qr'?'':'none';
+    document.getElementById('bc-lmsg').style.display=m==='barcode'?'':'none';
+    document.getElementById('logo-stab').style.display=m==='qr'?'':'none';
+    document.getElementById('save-qr-btn').style.display=m==='qr'?'':'none';
+    document.getElementById('social-shortcuts-wrap').style.display=m==='qr'?'':'none';
+    document.getElementById('cap-bar-wrap').style.display='none';
+    showEmpty();
+    if(m==='qr') dQR(); else dBC();
+  }
+}
+
+/* ═══════════════════════════════ SETTINGS TABS ═══════════════════════════════ */
+function switchStab(pg,btn){
+  document.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.spage').forEach(p=>p.classList.remove('on'));
+  document.getElementById('pg-'+pg).classList.add('on');
+}
+
+/* ═══════════════════════════════ EC ═══════════════════════════════ */
+function setEC(v,el){
+  ec=v;
+  document.querySelectorAll('.ecbtn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');dQR();
+}
+
+/* ═══════════════════════════════ QR TYPE ═══════════════════════════════ */
+function onTypeChange(){
+  const t=document.getElementById('qr-type').value;
+  ['wifi-f','vc-f','sms-f','geo-f','cal-f'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  const map={wifi:'wifi-f',vcard:'vc-f',sms:'sms-f',geo:'geo-f',calendar:'cal-f'};
+  const ph={text:'Hello, world!',url:'https://example.com',email:'hello@example.com',phone:'+1 555 000 1234',sku:'SKU-001234'};
+  const def=document.getElementById('def-txt');
+  const txtEl=document.getElementById('qr-txt');
+  if(map[t]){def.style.display='none';document.getElementById(map[t]).classList.add('on');}
+  else{
+    def.style.display='';
+    txtEl.placeholder=ph[t]||'Enter content…';
+    txtEl.classList.remove('valid','invalid');
+  }
+  dQR();
+}
+
+/* ═══════════════════════════════ QR CONTENT ═══════════════════════════════ */
+function getContent(){
   const t=document.getElementById('qr-type').value;
   if(t==='wifi'){
-    const s=document.getElementById('wifi-ssid').value.trim();
-    const p=document.getElementById('wifi-pass').value;
-    const sec=document.getElementById('wifi-sec').value;
-    if(!s) return '';
-    return `WIFI:T:${sec};S:${s};P:${p};;`;
+    const s=document.getElementById('w-ssid').value.trim();if(!s) return '';
+    const p=document.getElementById('w-pass').value;
+    const sec=document.getElementById('w-sec').value;
+    const hid=document.getElementById('w-hidden').checked?'true':'false';
+    return `WIFI:T:${sec};S:${s};P:${p};H:${hid};;`;
   }
-  const v=document.getElementById('qr-text').value.trim();
-  if(t==='email'&&v&&!v.startsWith('mailto:')) return `mailto:${v}`;
-  if(t==='phone'&&v&&!v.startsWith('tel:')) return `tel:${v.replace(/\s/g,'')}`;
-  return v;
+  if(t==='vcard'){
+    const fn=document.getElementById('vc-fn').value.trim();
+    const ln=document.getElementById('vc-ln').value.trim();
+    if(!fn&&!ln) return '';
+    const ph=document.getElementById('vc-ph').value.trim();
+    const em=document.getElementById('vc-em').value.trim();
+    const org=document.getElementById('vc-org').value.trim();
+    const url=document.getElementById('vc-url').value.trim();
+    let v=`BEGIN:VCARD\nVERSION:3.0\nN:${ln};${fn}\nFN:${fn} ${ln}`;
+    if(ph) v+=`\nTEL:${ph}`;if(em) v+=`\nEMAIL:${em}`;
+    if(org) v+=`\nORG:${org}`;if(url) v+=`\nURL:${url}`;
+    v+=`\nEND:VCARD`;return v;
+  }
+  if(t==='sms'){
+    const ph=document.getElementById('sms-ph').value.trim();if(!ph) return '';
+    const msg=document.getElementById('sms-msg').value.trim();
+    return msg?`SMSTO:${ph}:${msg}`:`sms:${ph}`;
+  }
+  if(t==='geo'){
+    const lat=document.getElementById('geo-lat').value.trim();
+    const lng=document.getElementById('geo-lng').value.trim();
+    if(!lat||!lng) return '';
+    const lbl=document.getElementById('geo-lbl').value.trim();
+    return lbl?`geo:${lat},${lng}?q=${encodeURIComponent(lbl)}`:`geo:${lat},${lng}`;
+  }
+  if(t==='calendar'){
+    const ttl=document.getElementById('cal-ttl').value.trim();if(!ttl) return '';
+    const fmtDT=s=>s?s.replace(/[-:T]/g,'').slice(0,15)+'Z':'';
+    let v=`BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${ttl}`;
+    const s=document.getElementById('cal-s').value,e=document.getElementById('cal-e').value;
+    const loc=document.getElementById('cal-loc').value.trim(),desc=document.getElementById('cal-desc').value.trim();
+    if(s) v+=`\nDTSTART:${fmtDT(s)}`;if(e) v+=`\nDTEND:${fmtDT(e)}`;
+    if(loc) v+=`\nLOCATION:${loc}`;if(desc) v+=`\nDESCRIPTION:${desc}`;
+    v+=`\nEND:VEVENT\nEND:VCALENDAR`;return v;
+  }
+  if(t==='email'){const v=document.getElementById('qr-txt').value.trim();return v?(v.startsWith('mailto:')?v:`mailto:${v}`):''}
+  if(t==='phone'){const v=document.getElementById('qr-txt').value.trim();return v?(v.startsWith('tel:')?v:`tel:${v.replace(/\s/g,'')}`):''}
+  return document.getElementById('qr-txt').value.trim();
 }
 
-function updateSizeLabel(){document.getElementById('qr-size-label').textContent=document.getElementById('qr-size').value}
-function updateLogoLabel(){document.getElementById('logo-size-label').textContent=document.getElementById('logo-size').value+'%'}
-function updateLogoPadLabel(){document.getElementById('logo-pad-label').textContent=document.getElementById('logo-pad').value}
-function updateBCLabels(){
-  document.getElementById('bc-width-label').textContent=document.getElementById('bc-width').value;
-  document.getElementById('bc-height-label').textContent=document.getElementById('bc-height').value;
-  document.getElementById('bc-fontsize-label').textContent=document.getElementById('bc-fontsize').value;
-}
-
-function debouncedGenQR(){clearTimeout(qrDebounce);qrDebounce=setTimeout(generateQR,150)}
-function debouncedGenBC(){clearTimeout(bcDebounce);bcDebounce=setTimeout(generateBarcode,150)}
-
-function generateQR(){
-  const content=getQRContent();
-  const err=document.getElementById('qr-error');
-  if(!content){err.style.display='none';showEmpty();return;}
-  const size=parseInt(document.getElementById('qr-size').value);
-  const fg=document.getElementById('qr-fg').value;
-  const bg=document.getElementById('qr-bg').value;
-  const ecMap={L:QRCode.CorrectLevel.L,M:QRCode.CorrectLevel.M,Q:QRCode.CorrectLevel.Q,H:QRCode.CorrectLevel.H};
+/* ═══════════════════════════════ QR RENDERER ═══════════════════════════════ */
+let lastContent='';
+function genQR(){
+  const content=getContent();
+  const errEl=document.getElementById('qr-err');
+  if(!content){errEl.style.display='none';showEmpty();updateCapacity('');return}
+  setBusy();
   try{
-    const tmp=document.createElement('div');
-    tmp.style.cssText='position:absolute;left:-9999px;top:-9999px';
-    document.body.appendChild(tmp);
-    new QRCode(tmp,{text:content,width:size,height:size,colorDark:fg,colorLight:bg,correctLevel:ecMap[currentEC]||QRCode.CorrectLevel.M});
-    setTimeout(()=>{
-      try{
-        const src=tmp.querySelector('canvas')||tmp.querySelector('img');
-        if(!src){if(tmp.parentNode)document.body.removeChild(tmp);err.textContent='QR generation failed';err.style.display='block';showEmpty();return;}
-        const canvas=document.getElementById('qr-canvas');
-        canvas.width=size;canvas.height=size;
-        const ctx=canvas.getContext('2d');
-        const draw=()=>{
-          ctx.clearRect(0,0,size,size);
-          ctx.drawImage(src,0,0,size,size);
-          if(logoImg){
-            const pct=parseInt(document.getElementById('logo-size').value)/100;
-            const pad=parseInt(document.getElementById('logo-pad').value);
-            const lw=size*pct,lh=size*pct,lx=(size-lw)/2,ly=(size-lh)/2;
-            ctx.fillStyle='#fff';
-            ctx.beginPath();
-            if(ctx.roundRect)ctx.roundRect(lx-pad,ly-pad,lw+pad*2,lh+pad*2,8);
-            else ctx.rect(lx-pad,ly-pad,lw+pad*2,lh+pad*2);
-            ctx.fill();
-            ctx.drawImage(logoImg,lx,ly,lw,lh);
-          }
-          if(tmp.parentNode)document.body.removeChild(tmp);
-          err.style.display='none';
-          showOutput('qr');
-        };
-        if(src.tagName==='IMG'&&!src.complete){src.onload=draw;}else{draw();}
-      }catch(e2){
-        if(tmp.parentNode)document.body.removeChild(tmp);
-        err.textContent=e2.message||'Invalid content';err.style.display='block';showEmpty();
-      }
-    },80);
+    const qr=qrcode(0,ec);
+    qr.addData(content);qr.make();
+    const n=qr.getModuleCount();
+    lastQRVersion=Math.round((n-17)/4)+1;
+    const mtx=[];
+    for(let r=0;r<n;r++){mtx.push([]);for(let c=0;c<n;c++) mtx[r].push(qr.isDark(r,c))}
+    drawQR(mtx,n);
+    errEl.style.display='none';
+    document.getElementById('stat-txt').textContent=`v${lastQRVersion} · ${n}×${n} modules`;
+    updateCapacity(content);
+    if(content!==lastContent){incGlobalCount();lastContent=content;}
   }catch(e){
-    err.textContent=e.message||'Invalid content for QR code';
-    err.style.display='block';
-    showEmpty();
+    errEl.textContent=e.message||'Invalid content';errEl.style.display='block';showEmpty();
   }
 }
 
+function drawQR(mtx,n){
+  const baseSize=parseInt(document.getElementById('qr-sz').value);
+  const frameStyle=opts.frameStyle;
+  let fPad=0,fBot=0;
+  if(frameStyle==='border') fPad=14;
+  if(frameStyle==='badge'){fPad=14;fBot=50}
+  const qrSz=baseSize;
+  const cW=qrSz+fPad*2,cH=qrSz+fPad*2+fBot;
+  const canvas=document.getElementById('qr-canvas');
+  canvas.width=cW;canvas.height=cH;
+  const ctx=canvas.getContext('2d');
+  const qrBg=document.getElementById('qr-bg').value;
+  const frameClr=document.getElementById('frame-clr').value;
+  const frameLClr=document.getElementById('frame-lclr').value;
+  const frameLbl=(document.getElementById('frame-lbl').value||'SCAN ME').toUpperCase();
 
-function generateBarcode(){
-  const val=document.getElementById('bc-text').value.trim();
-  const err=document.getElementById('bc-error');
-  if(!val){err.style.display='none';showEmpty();return;}
+  if(frameStyle==='none'){ctx.fillStyle=qrBg;ctx.fillRect(0,0,cW,cH);}
+  else{
+    ctx.fillStyle=frameClr;rr(ctx,0,0,cW,cH,18);ctx.fill();
+    ctx.fillStyle=qrBg;rr(ctx,fPad,fPad,qrSz,qrSz,10);ctx.fill();
+    if(frameStyle==='badge'){
+      ctx.fillStyle=frameLClr;
+      ctx.font=`700 ${Math.round(fBot*.36)}px Outfit,sans-serif`;
+      ctx.textAlign='center';
+      ctx.fillText(frameLbl,cW/2,fPad+qrSz+fBot*.65);
+    }
+  }
 
-  const fmt=document.getElementById('bc-format').value;
-  const fg=document.getElementById('bc-fg').value;
-  const bg=document.getElementById('bc-bg').value;
-  const bw=parseFloat(document.getElementById('bc-width').value);
-  const bh=parseInt(document.getElementById('bc-height').value);
-  const showLabel=document.getElementById('bc-label').checked;
-  const fs=parseInt(document.getElementById('bc-fontsize').value);
+  const fg=document.getElementById('qr-fg').value;
+  const fg2=document.getElementById('qr-fg2').value;
+  const gm=opts.gradMode;
+  let fill;
+  if(gm==='linear'){
+    const ang=parseInt(document.getElementById('qr-ang').value)*Math.PI/180;
+    const cx=fPad+qrSz/2,cy=fPad+qrSz/2;
+    const grd=ctx.createLinearGradient(cx-Math.cos(ang)*qrSz/2,cy-Math.sin(ang)*qrSz/2,cx+Math.cos(ang)*qrSz/2,cy+Math.sin(ang)*qrSz/2);
+    grd.addColorStop(0,fg);grd.addColorStop(1,fg2);fill=grd;
+  } else if(gm==='radial'){
+    const cx=fPad+qrSz/2,cy=fPad+qrSz/2;
+    const grd=ctx.createRadialGradient(cx,cy,0,cx,cy,qrSz*.55);
+    grd.addColorStop(0,fg);grd.addColorStop(1,fg2);fill=grd;
+  } else {fill=fg}
 
-  const svg=document.getElementById('barcode-svg');
+  const cell=qrSz/n,ox=fPad,oy=fPad;
+  const ms=opts.moduleStyle,es=opts.eyeStyle;
+
+  ctx.fillStyle=fill;
+  for(let r=0;r<n;r++) for(let c=0;c<n;c++){
+    if(!mtx[r][c]) continue;
+    if(inEye(r,c,n)) continue;
+    drawMod(ctx,ox+c*cell,oy+r*cell,cell,ms);
+  }
+  [[0,0],[0,n-7],[n-7,0]].forEach(([er,ec2])=>{drawEye(ctx,ox+ec2*cell,oy+er*cell,cell,fill,qrBg,es);});
+
+  if(logoImg){
+    const pct=parseInt(document.getElementById('l-sz').value)/100;
+    const pad=parseInt(document.getElementById('l-pad').value);
+    const lw=qrSz*pct,lh=qrSz*pct;
+    const lx=ox+(qrSz-lw)/2,ly=oy+(qrSz-lh)/2;
+    const lbg=document.getElementById('l-bg').value;
+    const sh=opts.logoBg;
+    ctx.fillStyle=lbg;ctx.beginPath();
+    if(sh==='circle') ctx.arc(lx+lw/2,ly+lh/2,lw/2+pad,0,Math.PI*2);
+    else{const rv=sh==='rounded'?10:3;if(ctx.roundRect)ctx.roundRect(lx-pad,ly-pad,lw+pad*2,lh+pad*2,rv);else ctx.rect(lx-pad,ly-pad,lw+pad*2,lh+pad*2)}
+    ctx.fill();
+    ctx.drawImage(logoImg,lx,ly,lw,lh);
+  }
+
+  showOut('qr');
+  histAdd(canvas,getContent().slice(0,18)||'QR Code');
+}
+
+function inEye(r,c,n){return(r<7&&c<7)||(r<7&&c>=n-7)||(r>=n-7&&c<7)}
+
+function drawMod(ctx,x,y,s,style){
+  const g=s*.08;
+  switch(style){
+    case'square':ctx.fillRect(x,y,s,s);break;
+    case'rounded':{const rv=s*.3;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x+g/2,y+g/2,s-g,s-g,rv);else ctx.rect(x+g/2,y+g/2,s-g,s-g);ctx.fill();break}
+    case'dots':ctx.beginPath();ctx.arc(x+s/2,y+s/2,s*.41,0,Math.PI*2);ctx.fill();break;
+    case'fluent':{const rv=s*.46;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x+g/2,y+g/2,s-g,s-g,rv);else ctx.rect(x+g/2,y+g/2,s-g,s-g);ctx.fill();break}
+    case'diamond':{const cx=x+s/2,cy=y+s/2,h=s*.43;ctx.beginPath();ctx.moveTo(cx,cy-h);ctx.lineTo(cx+h,cy);ctx.lineTo(cx,cy+h);ctx.lineTo(cx-h,cy);ctx.closePath();ctx.fill();break}
+  }
+}
+
+function drawEye(ctx,x,y,cell,fill,bg,style){
+  const tot=cell*7;
+  ctx.fillStyle=fill;
+  if(style==='circle'){
+    ctx.beginPath();ctx.arc(x+tot/2,y+tot/2,tot/2,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=bg;ctx.beginPath();ctx.arc(x+tot/2,y+tot/2,tot/2-cell,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=fill;ctx.beginPath();ctx.arc(x+tot/2,y+tot/2,cell*1.5,0,Math.PI*2);ctx.fill();
+  } else {
+    const ro=style==='rounded'?cell*1.2:cell*.15;
+    const ri=style==='rounded'?cell*.7:cell*.08;
+    ctx.fillStyle=fill;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,tot,tot,ro);else ctx.rect(x,y,tot,tot);ctx.fill();
+    ctx.fillStyle=bg;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x+cell,y+cell,tot-2*cell,tot-2*cell,ro*.5);else ctx.rect(x+cell,y+cell,tot-2*cell,tot-2*cell);ctx.fill();
+    ctx.fillStyle=fill;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x+2*cell,y+2*cell,3*cell,3*cell,ri);else ctx.rect(x+2*cell,y+2*cell,3*cell,3*cell);ctx.fill();
+  }
+}
+
+function rr(ctx,x,y,w,h,r){if(ctx.roundRect)ctx.roundRect(x,y,w,h,r);else ctx.rect(x,y,w,h)}
+
+/* ═══════════════════════════════ BARCODE ═══════════════════════════════ */
+function genBC(){
+  const val=document.getElementById('bc-txt').value.trim();
+  const errEl=document.getElementById('bc-err');
+  if(!val){errEl.style.display='none';showEmpty();return}
+  setBusy();
+  const svg=document.getElementById('bc-svg');
   try{
     JsBarcode(svg,val,{
-      format:fmt,lineColor:fg,background:bg,
-      width:bw,height:bh,displayValue:showLabel,
-      fontSize:fs,fontOptions:'',font:'Space Grotesk, sans-serif',
-      textMargin:showLabel?6:0,margin:16
+      format:document.getElementById('bc-fmt').value,
+      lineColor:document.getElementById('bc-fg').value,
+      background:document.getElementById('bc-bg').value,
+      width:parseFloat(document.getElementById('bc-w').value),
+      height:parseInt(document.getElementById('bc-h').value),
+      displayValue:document.getElementById('bc-shw').checked,
+      fontSize:parseInt(document.getElementById('bc-fs').value),
+      font:'DM Sans,sans-serif',
+      textMargin:document.getElementById('bc-shw').checked?5:0,
+      margin:parseInt(document.getElementById('bc-m').value),
     });
-    err.style.display='none';
-    showOutput('barcode');
+    errEl.style.display='none';
+    document.getElementById('stat-txt').textContent=`${document.getElementById('bc-fmt').value} · ${val.length} chars`;
+    showOut('barcode');
+    incGlobalCount();
+    histAddSVG(svg,val.slice(0,14));
   }catch(e){
-    err.textContent=e.message||'Invalid value for this format';
-    err.style.display='block';
-    showEmpty();
+    errEl.textContent=e.message||'Invalid value for format';errEl.style.display='block';showEmpty();
   }
 }
 
+function onBCFmt(){
+  const fmt=document.getElementById('bc-fmt').value;
+  const h=document.getElementById('bc-hint');
+  if(fmtHints[fmt]){h.textContent=fmtHints[fmt];h.style.display='block'}
+  else h.style.display='none';
+}
+
+/* ═══════════════════════════════ COLOR PRESETS ═══════════════════════════════ */
+function applyPreset(c1,c2,grad,bg){
+  const bgColor=bg||'#ffffff';
+  document.getElementById('qr-fg').value=c1;
+  document.getElementById('hex-fg').value=c1.toUpperCase();
+  document.getElementById('qr-bg').value=bgColor;
+  document.getElementById('hex-bg').value=bgColor.toUpperCase();
+  if(c2&&grad!=='solid'){
+    document.getElementById('qr-fg2').value=c2;
+    document.getElementById('hex-fg2').value=c2.toUpperCase();
+  }
+  document.querySelectorAll('#pg-style .pills')[2]
+    .querySelectorAll('.pill').forEach(p=>{
+      const match=p.textContent.toLowerCase().replace(' gradient','')===grad;
+      p.classList.toggle('on',match);
+      if(match) opts.gradMode=grad;
+    });
+  document.getElementById('fg2-wrap').style.display=grad!=='solid'?'':'none';
+  document.getElementById('grad-ang-wrap').style.display=grad==='linear'?'':'none';
+  dQR();
+}
+
+/* ═══════════════════════════════ BATCH ═══════════════════════════════ */
+function addBatch(){
+  const inp=document.getElementById('batch-inp');
+  const val=inp.value.trim();if(!val) return;
+  batchItems.push(val);inp.value='';renderBatch();
+}
+function removeBatch(i){batchItems.splice(i,1);renderBatch()}
+function clearBatch(){batchItems=[];renderBatch()}
+function renderBatch(){
+  const list=document.getElementById('batch-list');
+  list.innerHTML='';
+  batchItems.forEach((v,i)=>{
+    const row=document.createElement('div');row.className='batch-row';
+    row.innerHTML=`<span title="${v}">${v}</span><button onclick="removeBatch(${i})">✕</button>`;
+    list.appendChild(row);
+  });
+  document.getElementById('batch-dl-btn').style.display=batchItems.length?'flex':'none';
+  document.getElementById('batch-clr-btn').style.display=batchItems.length?'flex':'none';
+}
+function dlBatch(){
+  if(!batchItems.length) return;
+  let idx=0;
+  function next(){
+    if(idx>=batchItems.length) return;
+    const val=batchItems[idx++];
+    try{
+      const qr=qrcode(0,'M');qr.addData(val);qr.make();
+      const n=qr.getModuleCount();
+      const c=document.createElement('canvas');c.width=256;c.height=256;
+      const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,256,256);
+      const cell=256/n;ctx.fillStyle='#000';
+      for(let r=0;r<n;r++) for(let cc=0;cc<n;cc++) if(qr.isDark(r,cc)) ctx.fillRect(cc*cell,r*cell,cell,cell);
+      const a=document.createElement('a');a.download=`qr-${idx}.png`;a.href=c.toDataURL('image/png');a.click();
+      incGlobalCount();
+    }catch(e){}
+    setTimeout(next,350);
+  }
+  next();
+  toast(`Downloading ${batchItems.length} QR codes…`,'inf');
+}
+
+/* ═══════════════════════════════ PILL ACTIVE ═══════════════════════════════ */
+function setPill(el,key,val){
+  el.closest('.pills').querySelectorAll('.pill').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  opts[key]=val;
+  if(key==='gradMode'){
+    const lin=val==='linear';const notSol=val!=='solid';
+    document.getElementById('grad-ang-wrap').style.display=lin?'':'none';
+    document.getElementById('fg2-wrap').style.display=notSol?'':'none';
+  }
+  if(key==='frameStyle'){
+    document.getElementById('frame-opts').style.display=val!=='none'?'':'none';
+    document.getElementById('frame-lbl-wrap').style.display=val==='badge'?'':'none';
+  }
+  if(mode==='qr') dQR();
+}
+
+/* ═══════════════════════════════ LABELS ═══════════════════════════════ */
+function updSz(){document.getElementById('sz-lbl').textContent=document.getElementById('qr-sz').value+'px'}
+function updAng(){document.getElementById('ang-lbl').textContent=document.getElementById('qr-ang').value+'°'}
+function updLogo(){
+  document.getElementById('lsz-lbl').textContent=document.getElementById('l-sz').value+'%';
+  document.getElementById('lpad-lbl').textContent=document.getElementById('l-pad').value;
+}
+function updBC(){
+  document.getElementById('bcw-lbl').textContent=document.getElementById('bc-w').value;
+  document.getElementById('bch-lbl').textContent=document.getElementById('bc-h').value;
+  document.getElementById('bcm-lbl').textContent=document.getElementById('bc-m').value;
+  document.getElementById('bcf-lbl').textContent=document.getElementById('bc-fs').value;
+}
+
+/* ═══════════════════════════════ DEBOUNCE ═══════════════════════════════ */
+function dQR(){clearTimeout(qrT);qrT=setTimeout(genQR,190)}
+function dBC(){clearTimeout(bcT);bcT=setTimeout(genBC,190)}
+
+/* ═══════════════════════════════ UI STATE ═══════════════════════════════ */
 function showEmpty(){
-  document.getElementById('empty-state').style.display='block';
-  document.getElementById('output-area').style.display='none';
+  document.getElementById('empty-st').style.cssText='display:flex;flex-direction:column;align-items:center';
   document.getElementById('qr-canvas').style.display='none';
-  document.getElementById('barcode-svg').style.display='none';
+  document.getElementById('bc-svg').style.display='none';
+  document.getElementById('stat-row').style.display='none';
+  document.getElementById('act-row').style.display='none';
+}
+function setBusy(){
+  const b=document.getElementById('stat-badge');
+  b.className='statbadge busy';b.textContent='Generating…';
+  document.getElementById('stat-row').style.display='flex';
+}
+function showOut(type){
+  document.getElementById('empty-st').style.display='none';
+  document.getElementById('qr-canvas').style.display=type==='qr'?'block':'none';
+  document.getElementById('bc-svg').style.display=type==='barcode'?'block':'none';
+  const b=document.getElementById('stat-badge');
+  b.className='statbadge ready';b.textContent='Ready';
+  document.getElementById('stat-row').style.display='flex';
+  document.getElementById('act-row').style.display='flex';
+  const sl=document.getElementById('scanline');
+  sl.style.display='block';sl.style.animation='none';
+  void sl.offsetHeight;sl.style.animation='scanAnim .65s ease-out forwards';
+  setTimeout(()=>sl.style.display='none',700);
 }
 
-function showOutput(type){
-  document.getElementById('empty-state').style.display='none';
-  document.getElementById('output-area').style.display='flex';
-  document.getElementById('output-area').style.flexDirection='column';
-  document.getElementById('output-area').style.alignItems='center';
-  const qc=document.getElementById('qr-canvas');
-  const bs=document.getElementById('barcode-svg');
-  qc.style.display=type==='qr'?'block':'none';
-  bs.style.display=type==='barcode'?'block':'none';
-  const svgBtn=document.getElementById('dl-svg-btn');
-  svgBtn.style.display=type==='barcode'?'':'none';
+/* ═══════════════════════════════ PREVIEW BG ═══════════════════════════════ */
+function setBg(cls,btn){
+  document.querySelectorAll('.bgbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('prev-area').className='prev-area '+cls;
 }
 
+/* ═══════════════════════════════ RESOLUTION ═══════════════════════════════ */
+function setRes(s,el){
+  exportScale=s;
+  document.querySelectorAll('.resbtn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+}
+
+/* ═══════════════════════════════ LOGO ═══════════════════════════════ */
 function handleLogo(e){
-  const file=e.target.files[0];
-  if(!file) return;
+  const file=e.target.files[0];if(!file) return;
   const reader=new FileReader();
   reader.onload=ev=>{
     const img=new Image();
     img.onload=()=>{
       logoImg=img;
       document.getElementById('logo-thumb').src=ev.target.result;
-      document.getElementById('logo-name').textContent=file.name.length>22?file.name.slice(0,20)+'…':file.name;
-      document.getElementById('logo-controls').style.display='block';
-      debouncedGenQR();
+      document.getElementById('logo-nm').textContent=file.name.length>22?file.name.slice(0,20)+'…':file.name;
+      document.getElementById('logo-prev-wrap').style.display='block';
+      dQR();
     };
     img.src=ev.target.result;
   };
   reader.readAsDataURL(file);
 }
-
 function clearLogo(){
-  logoImg=null;
-  document.getElementById('logo-input').value='';
-  document.getElementById('logo-controls').style.display='none';
-  debouncedGenQR();
+  logoImg=null;document.getElementById('logo-inp').value='';
+  document.getElementById('logo-prev-wrap').style.display='none';dQR();
 }
 
-function downloadCode(format){
-  if(currentTab==='qr'){
+/* ═══════════════════════════════ HISTORY ═══════════════════════════════ */
+function histAdd(srcCanvas,label){
+  const c=document.createElement('canvas');c.width=52;c.height=52;
+  c.getContext('2d').drawImage(srcCanvas,0,0,52,52);
+  codeHistory.unshift({c,label});
+  if(codeHistory.length>8) codeHistory.pop();
+  renderHist();
+}
+function histAddSVG(svg,label){
+  const s=new XMLSerializer().serializeToString(svg);
+  const url='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(s)));
+  const img=new Image();const bb=svg.getBoundingClientRect();
+  img.onload=()=>{
+    const c=document.createElement('canvas');c.width=52;c.height=52;
+    const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,52,52);
+    const scale=Math.min(52/bb.width,52/bb.height);
+    const w=bb.width*scale,h=bb.height*scale;
+    ctx.drawImage(img,(52-w)/2,(52-h)/2,w,h);
+    codeHistory.unshift({c,label});
+    if(codeHistory.length>8) codeHistory.pop();
+    renderHist();
+  };
+  img.src=url;
+}
+function renderHist(){
+  const wrap=document.getElementById('hist-wrap');
+  const strip=document.getElementById('hist-strip');
+  if(!codeHistory.length){wrap.style.display='none';return}
+  wrap.style.display='block';strip.innerHTML='';
+  codeHistory.forEach(h=>{
+    const item=document.createElement('div');item.className='hist-item';item.title=h.label;
+    const nc=document.createElement('canvas');nc.width=52;nc.height=52;
+    nc.getContext('2d').drawImage(h.c,0,0);
+    const lbl=document.createElement('div');lbl.className='hist-lbl';lbl.textContent=h.label;
+    item.appendChild(nc);item.appendChild(lbl);
+    strip.appendChild(item);
+  });
+}
+
+/* ═══════════════════════════════ DOWNLOAD ═══════════════════════════════ */
+function getFilename(ext){
+  const base=document.getElementById('exp-fname').value.trim()||'qrcode';
+  return base+'.'+ext;
+}
+function dl(fmt){
+  if(mode==='qr'){
     const canvas=document.getElementById('qr-canvas');
-    if(format==='png'){
-      const a=document.createElement('a');
-      a.download='qrcode.png';a.href=canvas.toDataURL('image/png');a.click();
+    if(fmt==='png'){
+      const sc=exportScale;
+      const out=document.createElement('canvas');
+      out.width=canvas.width*sc;out.height=canvas.height*sc;
+      const ctx=out.getContext('2d');
+      ctx.imageSmoothingEnabled=false;ctx.scale(sc,sc);ctx.drawImage(canvas,0,0);
+      const a=document.createElement('a');a.download=getFilename('png');a.href=out.toDataURL('image/png');a.click();
+    } else {
+      const dataURL=canvas.toDataURL('image/png');
+      const w=canvas.width,h=canvas.height;
+      const s=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><image href="${dataURL}" width="${w}" height="${h}"/></svg>`;
+      blobDl(new Blob([s],{type:'image/svg+xml'}),getFilename('svg'));
     }
   } else {
-    const svg=document.getElementById('barcode-svg');
-    if(format==='png'){
+    const svg=document.getElementById('bc-svg');
+    if(fmt==='png'){
       const s=new XMLSerializer().serializeToString(svg);
       const url='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(s)));
-      const img=new Image();
-      const bb=svg.getBoundingClientRect();
+      const img=new Image();const bb=svg.getBoundingClientRect();
       img.onload=()=>{
+        const sc=exportScale;
         const c=document.createElement('canvas');
-        c.width=bb.width*2;c.height=bb.height*2;
-        const ctx=c.getContext('2d');
-        ctx.scale(2,2);ctx.drawImage(img,0,0,bb.width,bb.height);
-        const a=document.createElement('a');
-        a.download='barcode.png';a.href=c.toDataURL('image/png');a.click();
+        c.width=bb.width*sc;c.height=bb.height*sc;
+        const ctx=c.getContext('2d');ctx.scale(sc,sc);ctx.drawImage(img,0,0,bb.width,bb.height);
+        const a=document.createElement('a');a.download=getFilename('png');a.href=c.toDataURL('image/png');a.click();
       };
       img.src=url;
     } else {
-      const s=new XMLSerializer().serializeToString(svg);
-      const blob=new Blob([s],{type:'image/svg+xml'});
-      const a=document.createElement('a');
-      a.download='barcode.svg';a.href=URL.createObjectURL(blob);a.click();
+      blobDl(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}),getFilename('svg'));
     }
+  }
+  dlCount++;
+  document.getElementById('sb-dl').textContent=dlCount;
+  toast('Downloaded!','ok');
+}
+function blobDl(blob,name){const a=document.createElement('a');a.download=name;a.href=URL.createObjectURL(blob);a.click()}
+
+/* ═══════════════════════════════ CLIPBOARD ═══════════════════════════════ */
+function canvasToBlob(canvas){
+  return new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+}
+async function buildBCCanvas(){
+  const svg=document.getElementById('bc-svg');
+  const s=new XMLSerializer().serializeToString(svg);
+  const url='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(s)));
+  const img=await new Promise((r,j)=>{const i=new Image();i.onload=()=>r(i);i.onerror=j;i.src=url});
+  const bb=svg.getBoundingClientRect();
+  const c=document.createElement('canvas');c.width=bb.width*2;c.height=bb.height*2;
+  const ctx=c.getContext('2d');ctx.scale(2,2);ctx.drawImage(img,0,0,bb.width,bb.height);
+  return c;
+}
+async function clipCopy(){
+  try{
+    if(mode==='qr'){
+      const canvas=document.getElementById('qr-canvas');
+      if(canvas.style.display==='none') throw new Error('nothing');
+    } else {
+      const svg=document.getElementById('bc-svg');
+      if(svg.style.display==='none') throw new Error('nothing');
+    }
+  }catch{toast('Generate a code first','er');return}
+
+  if(!navigator.clipboard || typeof ClipboardItem==='undefined'){
+    toast(location.protocol==='file:'
+      ?'Clipboard needs a server (https/localhost) — try PNG download'
+      :'Clipboard not supported in this browser — try PNG download','er');
+    return;
+  }
+
+  try{
+    // Build a Promise<Blob> and hand it to ClipboardItem WITHOUT awaiting it first —
+    // this keeps the write() call tied to the original click's user-activation,
+    // which Chrome requires. Awaiting the blob before calling write() loses that
+    // activation and silently fails with "Clipboard blocked".
+    const blobPromise=mode==='qr'
+      ? canvasToBlob(document.getElementById('qr-canvas'))
+      : buildBCCanvas().then(canvasToBlob);
+    await navigator.clipboard.write([new ClipboardItem({'image/png':blobPromise})]);
+    toast('Copied to clipboard!','ok');
+  }catch(err){
+    console.error('Clipboard copy failed:',err);
+    toast(location.protocol==='file:'
+      ?'Clipboard needs a server (https/localhost) — try PNG download'
+      :'Clipboard blocked — try PNG download','er');
   }
 }
 
-// Drag & drop for logo
-const drop=document.getElementById('logo-drop');
-drop.addEventListener('dragover',e=>{e.preventDefault();drop.style.borderColor='var(--accent)'});
-drop.addEventListener('dragleave',()=>{drop.style.borderColor=''});
-drop.addEventListener('drop',e=>{
-  e.preventDefault();drop.style.borderColor='';
-  const file=e.dataTransfer.files[0];
-  if(file&&file.type.startsWith('image/')){
-    const dt=new DataTransfer();dt.items.add(file);
-    document.getElementById('logo-input').files=dt.files;
-    handleLogo({target:{files:[file]}});
+/* ═══════════════════════════════ SHARE ═══════════════════════════════ */
+async function shareNative(){
+  const canvas=document.getElementById('qr-canvas');
+  if(canvas.style.display==='none'){toast('Generate a QR code first.','er');return}
+  if(!navigator.share){toast('Share not supported in this browser.','er');return}
+  try{
+    const blob=await canvasToBlob(canvas);
+    const file=new File([blob],'qrcode.png',{type:'image/png'});
+    await navigator.share({title:'QR Code',files:[file]});
+  }catch(err){
+    if(err && err.name==='AbortError') return; // user cancelled the share sheet
+    console.error('Share failed:',err);
+    toast('Could not share — try PNG download','er');
+  }
+}
+
+async function copyDataUrl(){
+  const canvas=document.getElementById('qr-canvas');
+  if(canvas.style.display==='none'){toast('Generate a QR code first.','er');return}
+  try{
+    await navigator.clipboard.writeText(canvas.toDataURL('image/png'));
+    toast('Data URL copied!','ok');
+  }catch{toast('Could not copy.','er')}
+}
+
+/* ═══════════════════════════════ DRAG & DROP LOGO ═══════════════════════════════ */
+const ld=document.getElementById('logo-drop');
+ld.addEventListener('dragover',e=>{e.preventDefault();ld.style.borderColor='var(--accent)'});
+ld.addEventListener('dragleave',()=>ld.style.borderColor='');
+ld.addEventListener('drop',e=>{
+  e.preventDefault();ld.style.borderColor='';
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type.startsWith('image/')){
+    const dt=new DataTransfer();dt.items.add(f);
+    document.getElementById('logo-inp').files=dt.files;
+    handleLogo({target:{files:[f]}});
   }
 });
 
-// Init
+/* ═══════════════════════════════ TOAST ═══════════════════════════════ */
+function toast(msg,type='ok'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show '+type;
+  setTimeout(()=>t.className='toast',2400);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ══ SCANNER ENGINE ══
+═══════════════════════════════════════════════════════════════ */
+let scanStream=null;
+let scanRAF=null;
+let scanActive=false;
+let scanTabCurrent='camera';
+let lastScannedImageSrc=null; // for re-scan
+
+/* ── Switch between Camera / From Image tabs ── */
+function switchScanTab(t){
+  scanTabCurrent=t;
+  document.querySelectorAll('.scan-src-tab').forEach(b=>{
+    b.classList.toggle('active',b.dataset.tab===t);
+  });
+  const isCam=t==='camera';
+  document.getElementById('scan-cam-section').style.display=isCam?'':'none';
+  document.getElementById('scan-img-section').style.display=isCam?'none':'';
+  if(!isCam && scanActive) stopCamera();
+}
+
+/* ── Start camera scanning ── */
+async function startCamera(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    toast('Camera not supported in this browser.','er');return;
+  }
+  const video=document.getElementById('scan-video');
+  const idle=document.getElementById('cam-idle-msg');
+  const overlay=document.getElementById('cam-overlay-ui');
+  const camArea=document.getElementById('cam-area');
+  const startBtn=document.getElementById('btn-start-cam');
+  const stopBtn=document.getElementById('btn-stop-cam');
+  const scanLbl=document.getElementById('cam-scanning-lbl');
+  try{
+    scanStream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}
+    });
+    video.srcObject=scanStream;
+    await video.play();
+    video.style.display='block';
+    idle.style.display='none';
+    overlay.classList.add('on');
+    camArea.classList.add('scanning');
+    startBtn.style.display='none';
+    stopBtn.style.display='flex';
+    scanLbl.style.display='inline';
+    scanActive=true;
+    scanLoop();
+  }catch(err){
+    const msg=err.name==='NotAllowedError'
+      ?'Camera permission denied. Please allow access and try again.'
+      :'Could not access camera: '+err.message;
+    toast(msg,'er');
+  }
+}
+
+/* ── Stop camera ── */
+function stopCamera(){
+  scanActive=false;
+  if(scanRAF){cancelAnimationFrame(scanRAF);scanRAF=null}
+  if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}
+  const video=document.getElementById('scan-video');
+  video.srcObject=null;
+  video.style.display='none';
+  document.getElementById('cam-idle-msg').style.display='flex';
+  document.getElementById('cam-overlay-ui').classList.remove('on');
+  document.getElementById('cam-area').classList.remove('scanning');
+  document.getElementById('btn-start-cam').style.display='flex';
+  document.getElementById('btn-stop-cam').style.display='none';
+  document.getElementById('cam-scanning-lbl').style.display='none';
+}
+
+/* ── Continuous scan loop ── */
+function scanLoop(){
+  if(!scanActive) return;
+  const video=document.getElementById('scan-video');
+  const canvas=document.getElementById('scan-canvas-hidden');
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+
+  if(video.readyState===HTMLMediaElement.HAVE_ENOUGH_DATA && video.videoWidth>0){
+    canvas.width=video.videoWidth;
+    canvas.height=video.videoHeight;
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+    const code=jsQR(imageData.data,imageData.width,imageData.height,{
+      inversionAttempts:'dontInvert'
+    });
+    if(code && code.data){
+      stopCamera();
+      displayScanResult(code.data);
+      return;
+    }
+  }
+  scanRAF=requestAnimationFrame(scanLoop);
+}
+
+/* ── Handle uploaded image for scanning ── */
+function handleScanImage(e){
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      // Show preview
+      const preview=document.getElementById('scan-img-preview');
+      preview.src=ev.target.result;
+      preview.style.display='block';
+      lastScannedImageSrc=ev.target.result;
+      document.getElementById('img-drop-inner').style.display='none';
+      document.getElementById('btn-clear-scan-img').style.display='flex';
+      document.getElementById('btn-rescan-img').style.display='flex';
+      decodeImageData(img);
+    };
+    img.onerror=()=>{
+      toast('Could not read that image file.','er');
+    };
+    img.src=ev.target.result;
+  };
+  reader.onerror=()=>toast('Could not read that file.','er');
+  reader.readAsDataURL(file);
+}
+
+/* ── Decode an Image element using the hidden canvas ── */
+function decodeImageData(img){
+  try{
+    const canvas=document.getElementById('scan-canvas-hidden');
+    const ctx=canvas.getContext('2d',{willReadFrequently:true});
+
+    // Scale down large images for performance
+    const MAX=1400;
+    let w=img.naturalWidth||img.width;
+    let h=img.naturalHeight||img.height;
+    if(!w||!h){
+      toast('Could not read that image.','er');
+      showScanResultEmpty();
+      return;
+    }
+    if(w>MAX||h>MAX){
+      const ratio=Math.min(MAX/w,MAX/h);
+      w=Math.round(w*ratio);h=Math.round(h*ratio);
+    }
+    canvas.width=w;canvas.height=h;
+    ctx.drawImage(img,0,0,w,h);
+    const imageData=ctx.getImageData(0,0,w,h);
+
+    // Try normal orientation first, then inverted
+    const code=jsQR(imageData.data,imageData.width,imageData.height,{
+      inversionAttempts:'attemptBoth'
+    });
+
+    if(code && code.data){
+      displayScanResult(code.data);
+    } else {
+      toast('No QR code found in this image.','er');
+      showScanResultEmpty();
+    }
+  }catch(err){
+    console.error('QR decode error:',err);
+    toast('Could not decode this image.','er');
+    showScanResultEmpty();
+  }
+}
+
+/* ── Re-scan the same image ── */
+function rescanImage(){
+  if(!lastScannedImageSrc) return;
+  const img=new Image();
+  img.onload=()=>decodeImageData(img);
+  img.src=lastScannedImageSrc;
+}
+
+/* ── Detect the type of decoded QR data ── */
+function detectQRType(data){
+  if(/^https?:\/\//i.test(data)) return 'URL';
+  if(/^mailto:/i.test(data)) return 'Email';
+  if(/^tel:/i.test(data)) return 'Phone';
+  if(/^smsto:/i.test(data)||/^sms:/i.test(data)) return 'SMS';
+  if(/^WIFI:/i.test(data)) return 'Wi-Fi';
+  if(/^BEGIN:VCARD/i.test(data)) return 'vCard';
+  if(/^geo:/i.test(data)) return 'Location';
+  if(/^BEGIN:VCALENDAR/i.test(data)) return 'Calendar';
+  if(/^\d+$/.test(data.trim())) return 'Number';
+  return 'Text';
+}
+
+/* ── Display scan result in the result panel ── */
+function displayScanResult(data){
+  const panel=document.getElementById('scan-result-panel');
+  const placeholder=document.getElementById('scan-result-placeholder');
+  const valEl=document.getElementById('scan-result-val');
+  const badge=document.getElementById('scan-type-badge');
+  const actionRow=document.getElementById('scan-action-row');
+  const openBtn=document.getElementById('btn-scan-open-url');
+
+  const type=detectQRType(data);
+
+  // Update result value
+  valEl.textContent=data;
+  valEl.style.display='block';
+  placeholder.style.display='none';
+
+  // Type badge
+  badge.textContent=type;
+  badge.style.display='';
+
+  // Show "Open URL" only for URLs
+  openBtn.style.display=/^https?:\/\//i.test(data)?'flex':'none';
+
+  // Show actions
+  actionRow.style.display='flex';
+
+  // Highlight panel as found
+  panel.classList.add('found');
+  setTimeout(()=>panel.classList.remove('found'),1200);
+
+  toast('QR code scanned — '+type,'ok');
+}
+
+/* ── Reset result panel to empty state ── */
+function showScanResultEmpty(){
+  document.getElementById('scan-result-placeholder').style.display='flex';
+  document.getElementById('scan-result-val').style.display='none';
+  document.getElementById('scan-result-val').textContent='';
+  document.getElementById('scan-type-badge').style.display='none';
+  document.getElementById('scan-action-row').style.display='none';
+  document.getElementById('btn-scan-open-url').style.display='none';
+  document.getElementById('scan-result-panel').classList.remove('found');
+}
+
+/* ── Copy scan result to clipboard ── */
+function copyScanResult(){
+  const data=document.getElementById('scan-result-val').textContent;
+  if(!data){toast('Nothing to copy.','er');return}
+  navigator.clipboard.writeText(data)
+    .then(()=>toast('Copied to clipboard!','ok'))
+    .catch(()=>toast('Could not copy.','er'));
+}
+
+/* ── Open scanned URL in new tab ── */
+function openScanURL(){
+  const data=document.getElementById('scan-result-val').textContent;
+  if(!data) return;
+  if(/^https?:\/\//i.test(data)){
+    window.open(data,'_blank','noopener,noreferrer');
+  }
+}
+
+/* ── Use the scanned result in the QR Generator ── */
+function useScanResult(){
+  const data=document.getElementById('scan-result-val').textContent;
+  if(!data){toast('No scan result to use.','er');return}
+
+  // Determine best content type
+  let type='text';
+  if(/^https?:\/\//i.test(data)) type='url';
+  else if(/^mailto:/i.test(data)) type='email';
+  else if(/^tel:/i.test(data)) type='phone';
+
+  switchMode('qr');
+
+  const typeEl=document.getElementById('qr-type');
+  typeEl.value=type;
+  onTypeChange();
+
+  const txtEl=document.getElementById('qr-txt');
+  txtEl.value=data;
+  validateContent();
+  dQR();
+  toast('Loaded into generator!','ok');
+}
+
+/* ── "Scan Again" button ── */
+function resetScanResult(){
+  showScanResultEmpty();
+  if(scanTabCurrent==='camera'){
+    if(!scanActive) startCamera();
+  } else {
+    clearScanImage();
+  }
+}
+
+/* ── Clear uploaded image ── */
+function clearScanImage(){
+  const preview=document.getElementById('scan-img-preview');
+  preview.src='';
+  preview.style.display='none';
+  lastScannedImageSrc=null;
+  document.getElementById('img-drop-inner').style.display='flex';
+  document.getElementById('scan-img-inp').value='';
+  document.getElementById('btn-clear-scan-img').style.display='none';
+  document.getElementById('btn-rescan-img').style.display='none';
+  showScanResultEmpty();
+}
+
+/* ── Drag & drop for scan image upload area ── */
+(function(){
+  const drop=document.getElementById('img-scan-drop');
+  drop.addEventListener('dragover',e=>{
+    e.preventDefault();
+    drop.classList.add('drag-over');
+  });
+  drop.addEventListener('dragleave',()=>{
+    drop.classList.remove('drag-over');
+  });
+  drop.addEventListener('drop',e=>{
+    e.preventDefault();
+    drop.classList.remove('drag-over');
+    const f=e.dataTransfer.files[0];
+    if(f&&f.type.startsWith('image/')){
+      const dt=new DataTransfer();dt.items.add(f);
+      document.getElementById('scan-img-inp').files=dt.files;
+      handleScanImage({target:{files:[f]}});
+    }
+  });
+})();
+
+/* ═══════════════════════════════ INIT ═══════════════════════════════ */
 showEmpty();
-updateSizeLabel();
-updateBCLabels();
+updSz();updBC();updAng();
+document.getElementById('fg2-wrap').style.display='none';
+document.getElementById('grad-ang-wrap').style.display='none';
+initCounter();
+loadSession();
 </script>
 </body>
 </html>

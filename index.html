@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QR & Barcode Generator</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -509,46 +509,57 @@ function updateBCLabels(){
 function debouncedGenQR(){clearTimeout(qrDebounce);qrDebounce=setTimeout(generateQR,150)}
 function debouncedGenBC(){clearTimeout(bcDebounce);bcDebounce=setTimeout(generateBarcode,150)}
 
-async function generateQR(){
+function generateQR(){
   const content=getQRContent();
   const err=document.getElementById('qr-error');
   if(!content){err.style.display='none';showEmpty();return;}
-
   const size=parseInt(document.getElementById('qr-size').value);
   const fg=document.getElementById('qr-fg').value;
   const bg=document.getElementById('qr-bg').value;
-
-  const canvas=document.getElementById('qr-canvas');
-  canvas.width=size;canvas.height=size;
-
+  const ecMap={L:QRCode.CorrectLevel.L,M:QRCode.CorrectLevel.M,Q:QRCode.CorrectLevel.Q,H:QRCode.CorrectLevel.H};
   try{
-    await QRCode.toCanvas(canvas,content,{
-      width:size,margin:2,
-      color:{dark:fg,light:bg},
-      errorCorrectionLevel:currentEC
-    });
-    err.style.display='none';
-
-    if(logoImg){
-      const ctx=canvas.getContext('2d');
-      const pct=parseInt(document.getElementById('logo-size').value)/100;
-      const pad=parseInt(document.getElementById('logo-pad').value);
-      const lw=size*pct, lh=size*pct;
-      const lx=(size-lw)/2, ly=(size-lh)/2;
-      ctx.fillStyle='#fff';
-      ctx.beginPath();
-      ctx.roundRect(lx-pad,ly-pad,lw+pad*2,lh+pad*2,8);
-      ctx.fill();
-      ctx.drawImage(logoImg,lx,ly,lw,lh);
-    }
-
-    showOutput('qr');
+    const tmp=document.createElement('div');
+    tmp.style.cssText='position:absolute;left:-9999px;top:-9999px';
+    document.body.appendChild(tmp);
+    new QRCode(tmp,{text:content,width:size,height:size,colorDark:fg,colorLight:bg,correctLevel:ecMap[currentEC]||QRCode.CorrectLevel.M});
+    setTimeout(()=>{
+      try{
+        const src=tmp.querySelector('canvas')||tmp.querySelector('img');
+        if(!src){if(tmp.parentNode)document.body.removeChild(tmp);err.textContent='QR generation failed';err.style.display='block';showEmpty();return;}
+        const canvas=document.getElementById('qr-canvas');
+        canvas.width=size;canvas.height=size;
+        const ctx=canvas.getContext('2d');
+        const draw=()=>{
+          ctx.clearRect(0,0,size,size);
+          ctx.drawImage(src,0,0,size,size);
+          if(logoImg){
+            const pct=parseInt(document.getElementById('logo-size').value)/100;
+            const pad=parseInt(document.getElementById('logo-pad').value);
+            const lw=size*pct,lh=size*pct,lx=(size-lw)/2,ly=(size-lh)/2;
+            ctx.fillStyle='#fff';
+            ctx.beginPath();
+            if(ctx.roundRect)ctx.roundRect(lx-pad,ly-pad,lw+pad*2,lh+pad*2,8);
+            else ctx.rect(lx-pad,ly-pad,lw+pad*2,lh+pad*2);
+            ctx.fill();
+            ctx.drawImage(logoImg,lx,ly,lw,lh);
+          }
+          if(tmp.parentNode)document.body.removeChild(tmp);
+          err.style.display='none';
+          showOutput('qr');
+        };
+        if(src.tagName==='IMG'&&!src.complete){src.onload=draw;}else{draw();}
+      }catch(e2){
+        if(tmp.parentNode)document.body.removeChild(tmp);
+        err.textContent=e2.message||'Invalid content';err.style.display='block';showEmpty();
+      }
+    },80);
   }catch(e){
     err.textContent=e.message||'Invalid content for QR code';
     err.style.display='block';
     showEmpty();
   }
 }
+
 
 function generateBarcode(){
   const val=document.getElementById('bc-text').value.trim();
